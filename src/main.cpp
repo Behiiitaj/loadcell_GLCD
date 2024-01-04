@@ -16,7 +16,7 @@ const int LOADCELL_SCK_PIN = PB1;
 
 
 SemaphoreHandle_t xSemaphore = NULL;
-TaskHandle_t lcdHandle,readInputsHandle,readLoadCellHandle = NULL;
+TaskHandle_t lcdHandle,readInputsHandle,readLoadCellHandle,loadcellAnalysisHandle = NULL;
 
 
 static void lcd(void* arg) {
@@ -54,13 +54,14 @@ static void readInputs(void* arg) {
 }
 
 
-
-
 static void readLoadCell(void* arg) {
   UNUSED(arg);
   scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
-  scale.set_scale(settings.scaleVal);                    
+  delay(200);
+  scale.set_scale(settings.scaleVal);  
+  scale.power_up();
   scale.tare();
+  scale.power_down();
   while (1)
   {
     if( xSemaphoreTake( xSemaphore, ( TickType_t ) 20 ) == pdTRUE ){
@@ -74,21 +75,80 @@ static void readLoadCell(void* arg) {
 }
 
 
+static void loadcellAnalysis(void* arg) {
+  UNUSED(arg);
+  pinMode(PB2,OUTPUT);
+  pinMode(PB7,OUTPUT);
+  while (1)
+  {
+    if( xSemaphoreTake( xSemaphore, ( TickType_t ) 20 ) == pdTRUE ){
+      if (loadCell.setPointActive)
+      {
+        if (loadCell.value <= settings.setPointLow)
+        {
+          loadCell.highSetPoint = false;
+          loadCell.lowSetPoint = true;
+          digitalWrite(PB7,HIGH);
+          digitalWrite(PB2,LOW);
+        }
+        else if (loadCell.value > settings.setPointLow && loadCell.value <= settings.setPointHigh)
+        {
+          loadCell.highSetPoint = true;
+          loadCell.lowSetPoint = false;
+          digitalWrite(PB7,LOW);
+          digitalWrite(PB2,HIGH);
+        }
+        else
+        {
+          loadCell.setPointActive = false;
+          loadCell.highSetPoint = false;
+          loadCell.lowSetPoint = false;
+          digitalWrite(PB7,LOW);
+          digitalWrite(PB2,LOW);  
+        }
+
+      }
+      else
+      {
+        loadCell.setPointActive = false;
+          loadCell.highSetPoint = false;
+          loadCell.lowSetPoint = false;
+          digitalWrite(PB7,LOW);
+          digitalWrite(PB2,LOW);
+      }
+
+      
+      xSemaphoreGive(xSemaphore);
+    }
+    vTaskDelay(1);
+  }
+}
+
+
 void setup() {
   memoryInit();
   xSemaphore = xSemaphoreCreateMutex();
-  pinMode(PA6,OUTPUT);
-  pinMode(PB2,OUTPUT);
-  portBASE_TYPE s1, s2, s3;
+  portBASE_TYPE s1, s2, s3, s4;
 
+  // loadDefaultSetting();
+  // settings.password = 000;
+  // settings.scaleVal = 100000;
+  // settings.ratio = 1;
+  // settings.coefficent = 1;
+  // settings.Hysteresis = 0;
+  // settings.setPointHigh = 8000;
+  // settings.setPointLow = 3000;
+  // settings.unit = 0;
+  // memoryReadSetting();
+  // memoryWriteSetting();
   if (xSemaphore != NULL) {
 
     s1 = xTaskCreate(lcd, "LCD", 512, NULL, 500, &lcdHandle);
-    s2 = xTaskCreate(readInputs, "readInputs", 1024, NULL, -1, &readInputsHandle);
+    s2 = xTaskCreate(readInputs, "readInputs", 512, NULL, -1, &readInputsHandle);
     s3 = xTaskCreate(readLoadCell, "readLoadCell", 512, NULL, 400, &readLoadCellHandle);
+    s4 = xTaskCreate(loadcellAnalysis, "loadcellAnalysis", 512, NULL, 300, &loadcellAnalysisHandle);
 
-
-    if ( s1 != pdPASS|| s2 != pdPASS|| s3 != pdPASS) {
+    if ( s1 != pdPASS|| s2 != pdPASS|| s3 != pdPASS || s4 != pdPASS) {
       Serial.println(F("Creation problem"));
       while(1);
     }
@@ -96,17 +156,6 @@ void setup() {
     Serial.println("Insufficient RAM");
   }
   return ;
-  //loadDefaultSetting();
-  // settings.scaleVal = 100;
-  //settings.ratio = 0;
-  // settings.coefficent = 1;
-  // settings.Hysteresis = 0;
-  //settings.password = 111;
-  // settings.setPointHigh = 200;
-  // settings.setPointLow = 0;
-  // settings.unit = 0;
-  //memoryWriteSetting();
-  //memoryReadSetting();
 }
 
 void loop() {

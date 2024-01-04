@@ -33,6 +33,9 @@ typedef struct {
 
 typedef struct {
   float value;
+  bool highSetPoint;
+  bool lowSetPoint;
+  bool setPointActive;
 } LoadCellStruct;
 
 void loadDefaultSetting(void);

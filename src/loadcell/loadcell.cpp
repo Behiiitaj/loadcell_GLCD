@@ -14,7 +14,7 @@ void tareLoadCell(){
 
 void calibrateLoadCell(float weight){
     scale.power_up();
-    float newScale = scale.get_units(20) / weight * settings.scaleVal;
+    float newScale = scale.get_units(5) / weight * settings.scaleVal;
     settings.scaleVal = newScale;
     memoryWriteSetting();
     scale.set_scale(settings.scaleVal); 

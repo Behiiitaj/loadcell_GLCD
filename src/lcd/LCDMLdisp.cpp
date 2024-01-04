@@ -758,6 +758,7 @@ void mFunc_password(uint8_t param)
 int16_t numberSetpointHigh1 = 0;
 int16_t numberSetpointHigh2 = 0;
 int16_t numberSetpointHigh3 = 0;
+int16_t numberSetpointHigh4 = 0;
 int8_t currentNumberSetpointHigh = 1;
 
 // *********************************************************************
@@ -767,8 +768,9 @@ void mFunc_highSetpoint(uint8_t param)
   char bufNumber1[1];
   char bufNumber2[1];
   char bufNumber3[1];
+  char bufNumber4[1];
 
-  int8_t xFont = 45;
+  int8_t xFont = 35;
   int8_t xAddation = 15;
   int8_t yFont = 37;
   int8_t rectSize = 15;
@@ -779,9 +781,10 @@ void mFunc_highSetpoint(uint8_t param)
   {
     double originalNumber = settings.setPointHigh;
     int integerPart = static_cast<int>(originalNumber);
-    numberSetpointHigh1 = integerPart / 100;
-    numberSetpointHigh2 = (integerPart / 10) % 10;
-    numberSetpointHigh3 = (integerPart / 1) % 10;
+    numberSetpointHigh1 = integerPart / 1000;
+    numberSetpointHigh2 = (integerPart / 100) % 10;
+    numberSetpointHigh3 = (integerPart / 10) % 10;
+    numberSetpointHigh4 = (integerPart / 1) % 10;
     LCDML_UNUSED(param);
   }
 
@@ -791,7 +794,7 @@ void mFunc_highSetpoint(uint8_t param)
   {
       if(LCDML.BT_checkUp())
       {
-        if (currentNumberSetpointHigh==3) currentNumberSetpointHigh=1;
+        if (currentNumberSetpointHigh==4) currentNumberSetpointHigh=1;
         else currentNumberSetpointHigh++; 
       }
       if(LCDML.BT_checkDown())
@@ -809,6 +812,10 @@ void mFunc_highSetpoint(uint8_t param)
           case 3:
             if (numberSetpointHigh3 == 0) numberSetpointHigh3 = 9;
             else numberSetpointHigh3--;
+            break;
+          case 4:
+            if (numberSetpointHigh4 == 0) numberSetpointHigh4 = 9;
+            else numberSetpointHigh4--;
             break;
           }
       }
@@ -832,13 +839,16 @@ void mFunc_highSetpoint(uint8_t param)
         u8g2.drawStr(xFont +xAddation,yFont,bufNumber2);
         sprintf (bufNumber3, "%d", numberSetpointHigh3);
         u8g2.drawStr(xFont +(xAddation*2),yFont,bufNumber3);
+        sprintf (bufNumber4, "%d", numberSetpointHigh4);
+        u8g2.drawStr(xFont +(xAddation*3),yFont,bufNumber4);
 
         if (isEnter)
         {
           int result = 
-            (numberSetpointHigh1 * 100) + 
-            (numberSetpointHigh2 * 10) + 
-            (numberSetpointHigh3 * 1);
+            (numberSetpointHigh1 * 1000) + 
+            (numberSetpointHigh2 * 100) + 
+            (numberSetpointHigh3 * 10) +
+            (numberSetpointHigh4);
 
           settings.setPointHigh = result;
           memoryWriteSetting();
@@ -854,6 +864,9 @@ void mFunc_highSetpoint(uint8_t param)
           u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumberSetpointHigh-1)),(25),rectSize,rectSize,borderRadius);
           break;
         case 3:
+          u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumberSetpointHigh-1)),(25),rectSize,rectSize,borderRadius);
+          break;
+        case 4:
           u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumberSetpointHigh-1)),(25),rectSize,rectSize,borderRadius);
           break;
         }
@@ -873,6 +886,7 @@ void mFunc_highSetpoint(uint8_t param)
 int16_t numberSetpointLow1 = 0;
 int16_t numberSetpointLow2 = 0;
 int16_t numberSetpointLow3 = 0;
+int16_t numberSetpointLow4 = 0;
 int8_t currentNumberSetpointLow = 1;
 
 // *********************************************************************
@@ -882,8 +896,9 @@ void mFunc_lowSetpoint(uint8_t param)
   char bufNumber1[1];
   char bufNumber2[1];
   char bufNumber3[1];
+  char bufNumber4[1];
 
-  int8_t xFont = 45;
+  int8_t xFont = 35;
   int8_t xAddation = 15;
   int8_t yFont = 37;
   int8_t rectSize = 15;
@@ -894,9 +909,10 @@ void mFunc_lowSetpoint(uint8_t param)
   {
     double originalNumber = settings.setPointLow;
     int integerPart = static_cast<int>(originalNumber);
-    numberSetpointLow1 = integerPart / 100;
-    numberSetpointLow2 = (integerPart / 10) % 10;
-    numberSetpointLow3 = (integerPart / 1) % 10;
+    numberSetpointLow1 = integerPart / 1000;
+    numberSetpointLow2 = (integerPart / 100) % 10;
+    numberSetpointLow3 = (integerPart / 10) % 10;
+    numberSetpointLow4 = (integerPart / 1) % 10;
     LCDML_UNUSED(param);
   }
 
@@ -906,7 +922,7 @@ void mFunc_lowSetpoint(uint8_t param)
   {
       if(LCDML.BT_checkUp())
       {
-        if (currentNumberSetpointLow==3) currentNumberSetpointLow=1;
+        if (currentNumberSetpointLow==4) currentNumberSetpointLow=1;
         else currentNumberSetpointLow++; 
       }
       if(LCDML.BT_checkDown())
@@ -924,6 +940,10 @@ void mFunc_lowSetpoint(uint8_t param)
           case 3:
             if (numberSetpointLow3 == 0) numberSetpointLow3 = 9;
             else numberSetpointLow3--;
+            break;
+          case 4:
+            if (numberSetpointLow4 == 0) numberSetpointLow4 = 9;
+            else numberSetpointLow4--;
             break;
           }
       }
@@ -947,13 +967,16 @@ void mFunc_lowSetpoint(uint8_t param)
         u8g2.drawStr(xFont +xAddation,yFont,bufNumber2);
         sprintf (bufNumber3, "%d", numberSetpointLow3);
         u8g2.drawStr(xFont +(xAddation*2),yFont,bufNumber3);
+        sprintf (bufNumber4, "%d", numberSetpointLow4);
+        u8g2.drawStr(xFont +(xAddation*3),yFont,bufNumber4);
 
         if (isEnter)
         {
           int result = 
-            (numberSetpointLow1 * 100) + 
-            (numberSetpointLow2 * 10) + 
-            (numberSetpointLow3 * 1);
+            (numberSetpointLow1 * 1000) + 
+            (numberSetpointLow2 * 100) + 
+            (numberSetpointLow3 * 10)+
+            (numberSetpointLow4 * 1);;
 
           settings.setPointLow = result;
           memoryWriteSetting();
@@ -969,6 +992,9 @@ void mFunc_lowSetpoint(uint8_t param)
           u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumberSetpointLow-1)),(25),rectSize,rectSize,borderRadius);
           break;
         case 3:
+          u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumberSetpointLow-1)),(25),rectSize,rectSize,borderRadius);
+          break;
+        case 4:
           u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumberSetpointLow-1)),(25),rectSize,rectSize,borderRadius);
           break;
         }
@@ -1759,11 +1785,17 @@ float getLoadcellValue(){
 
 
 
+int16_t numberSettingsPassword1 = 0;
+int16_t numberSettingsPassword2 = 0;
+int16_t numberSettingsPassword3 = 0;
+int8_t currentNumberSettingsPassword = 1;
+
 void mFunc_settingsPassword(uint8_t param)
 {
   char bufNumber1[1];
   char bufNumber2[1];
   char bufNumber3[1];
+  String passwordWrong;
 
   int8_t xFont = 45;
   int8_t xAddation = 15;
@@ -1774,11 +1806,10 @@ void mFunc_settingsPassword(uint8_t param)
   bool isEnter = false;
   if(LCDML.FUNC_setup())          // ****** SETUP *********
   {
-    double originalNumber = settings.password;
-    int integerPart = static_cast<int>(originalNumber);
-    numberpassword1 = integerPart / 100;
-    numberpassword2 = (integerPart / 10) % 10;
-    numberpassword3 = (integerPart / 1) % 10;
+    numberSettingsPassword1 = 0;
+    numberSettingsPassword2 = 0;
+    numberSettingsPassword3 = 0;
+    passwordWrong = "";
     LCDML_UNUSED(param);
   }
 
@@ -1788,31 +1819,32 @@ void mFunc_settingsPassword(uint8_t param)
   {
       if(LCDML.BT_checkUp())
       {
-        if (currentNumberpassword==3) currentNumberpassword=1;
-        else currentNumberpassword++; 
+        passwordWrong = "";
+        if (currentNumberSettingsPassword==3) currentNumberSettingsPassword=1;
+        else currentNumberSettingsPassword++; 
       }
       if(LCDML.BT_checkDown())
       {
-        switch (currentNumberpassword)
+        passwordWrong = "";
+        switch (currentNumberSettingsPassword)
           {
           case 1:
-            if (numberpassword1 == 0) numberpassword1 = 9;
-            else numberpassword1--;
+            if (numberSettingsPassword1 == 0) numberSettingsPassword1 = 9;
+            else numberSettingsPassword1--;
             break;
           case 2:
-            if (numberpassword2 == 0) numberpassword2 = 9;
-            else numberpassword2--;
+            if (numberSettingsPassword2 == 0) numberSettingsPassword2 = 9;
+            else numberSettingsPassword2--;
             break;
           case 3:
-            if (numberpassword3 == 0) numberpassword3 = 9;
-            else numberpassword3--;
+            if (numberSettingsPassword3 == 0) numberSettingsPassword3 = 9;
+            else numberSettingsPassword3--;
             break;
           }
       }
       if (LCDML.BT_checkQuit()) LCDML.FUNC_goBackToMenu(1);
       if(LCDML.BT_checkEnter())
       {
-
         isEnter = true;
       }
     do {
@@ -1820,31 +1852,45 @@ void mFunc_settingsPassword(uint8_t param)
         
         u8g2.drawRFrame(0,0,128,64,borderRadius);
         u8g2.setFont(u8g_font_6x10r);
-        u8g2.drawStr(6,10,"Enter new password.");
+        u8g2.drawStr(6,10,"Enter your password.");
         
         u8g2.setFont(u8g_font_9x18Br);
-        sprintf (bufNumber1, "%d", numberpassword1);
+        sprintf (bufNumber1, "%d", numberSettingsPassword1);
         u8g2.drawStr(xFont,yFont,bufNumber1);
-        sprintf (bufNumber2, "%d", numberpassword2);
+        sprintf (bufNumber2, "%d", numberSettingsPassword2);
         u8g2.drawStr(xFont +xAddation,yFont,bufNumber2);
-        sprintf (bufNumber3, "%d", numberpassword3);
+        sprintf (bufNumber3, "%d", numberSettingsPassword3);
         u8g2.drawStr(xFont +(xAddation*2),yFont,bufNumber3);
+
 
         if (isEnter)
         {
-          // LCDML_UNUSED(param);
-          LCDML.OTHER_jumpToFunc(mFunc_settings);
+          int result = 
+            (numberSettingsPassword1 * 100) + 
+            (numberSettingsPassword2 * 10) + 
+            (numberSettingsPassword3 * 1);
+          if (result == settings.password)
+          {
+            LCDML.OTHER_jumpToFunc(mFunc_settings);
+            passwordWrong = "True  :)";
+          }
+          else
+          {
+            passwordWrong = "Wrong!!!";
+          }
         }
-        switch (currentNumberpassword)
+        u8g2.setFont(u8g_font_6x10r);
+        u8g2.drawStr(42,58,passwordWrong.c_str());
+        switch (currentNumberSettingsPassword)
         {
         case 1:
-          u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumberpassword-1)),(25),rectSize,rectSize,borderRadius);
+          u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumberSettingsPassword-1)),(25),rectSize,rectSize,borderRadius);
           break;
         case 2:
-          u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumberpassword-1)),(25),rectSize,rectSize,borderRadius);
+          u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumberSettingsPassword-1)),(25),rectSize,rectSize,borderRadius);
           break;
         case 3:
-          u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumberpassword-1)),(25),rectSize,rectSize,borderRadius);
+          u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumberSettingsPassword-1)),(25),rectSize,rectSize,borderRadius);
           break;
         }
     } while( u8g2.nextPage() );
@@ -1876,7 +1922,12 @@ void mFunc_screensaver(uint8_t param)
     {
       LCDML.FUNC_goBackToMenu(); 
     }
+    if (LCDML.BT_checkDown()) 
+    {
+      loadCell.setPointActive = true; 
+    }
       loadCellValue = (loadCell.value*ratioList[settings.ratio]* settings.coefficent) ; 
+      // loadCellValue = loadCell.value;
       char buf[40];
       if ((loadCellValue >0 && loadCellValue<1) || ((loadCellValue <0 && loadCellValue>-1)))
       {
@@ -1896,19 +1947,34 @@ void mFunc_screensaver(uint8_t param)
         dtostrf(ratioList[settings.ratio],4,3,screenRatio);
         u8g2.drawStr(4,60, String("[X"+String(screenRatio)+"]").c_str());
 
+
+
+        
+        u8g2.drawLine(7,16,7,48);
+        u8g2.setFont(u8g2_font_6x12_mr);
+        if(loadCell.setPointActive) u8g2.drawStr(1,23,String("s").c_str());
+        else u8g2.drawStr(1,23,String("").c_str());
+
+
         u8g2.setFont(u8g2_font_5x8_mr);
+        
         u8g2.drawStr(0,11,"I1:");
         u8g2.drawStr(30,11,"I2:");
-        
         if (inputs.input1 == 0) { u8g2.drawDisc(20,8,4);}
         else { u8g2.drawCircle(20,8,4);}
         if (inputs.input2 == 0) { u8g2.drawDisc(50,8,4);}
         else { u8g2.drawCircle(50,8,4);}
 
         u8g2.drawStr(74,11,"O1:");
-        u8g2.drawFrame(89,4,8,8);
         u8g2.drawStr(104,11,"O2:");
-        u8g2.drawBox(119,4,8,8);
+        if (loadCell.highSetPoint) u8g2.drawBox(119,4,8,8);
+        else u8g2.drawFrame(119,4,8,8);
+        if (loadCell.lowSetPoint) u8g2.drawBox(89,4,8,8);
+        else u8g2.drawFrame(89,4,8,8);
+        
+
+
+        
 
         u8g2.drawLine(0,48,128,48);
         u8g2.drawLine(0,16,128,16);
