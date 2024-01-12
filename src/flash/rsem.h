@@ -21,7 +21,8 @@ typedef struct {
   int unit;
   int setPointHigh;
   int setPointLow;
-
+  int zeroFilter;
+  int avgCount;
 } SettingStruct;
 
 
@@ -33,9 +34,11 @@ typedef struct {
 
 typedef struct {
   float value;
+  float pureADC;
   bool highSetPoint;
   bool lowSetPoint;
   bool setPointActive;
+  bool isOver;
 } LoadCellStruct;
 
 void loadDefaultSetting(void);

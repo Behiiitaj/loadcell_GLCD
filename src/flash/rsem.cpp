@@ -9,14 +9,16 @@ const uint16_t eeAddress = 0;
 
 
 void loadDefaultSetting(void) {
-  settings.scaleVal = 100;
-  settings.ratio = 0;
+  settings.scaleVal = 100000;
+  settings.ratio = 3;
   settings.coefficent = 1;
   settings.Hysteresis = 0;
-  settings.password = 111;
-  settings.setPointHigh = 200;
-  settings.setPointLow = 123;
+  settings.password = 000;
+  settings.setPointHigh = 400;
+  settings.setPointLow = 100;
   settings.unit = 0;
+  settings.avgCount = 5;
+  settings.zeroFilter = 1;
 }
 
 uint32_t internalFlashRead32bit(uint32_t address) {

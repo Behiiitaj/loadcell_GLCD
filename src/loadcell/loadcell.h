@@ -8,5 +8,6 @@ extern HX711 scale;  // Declare the HX711 object as an external variable
 
 void tareLoadCell();
 void calibrateLoadCell(float weight);
+void getWeight();
 
 #endif  // HX711_H

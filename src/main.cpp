@@ -4,7 +4,9 @@
 #include "./flash/rsem.h"
 #include <STM32FreeRTOS.h>
 #include "loadcell/loadcell.h"
+#include <ezBuzzer.h>
 
+ezBuzzer buzzer(PB7);
 
 extern SettingStruct settings;
 extern InputStruct inputs;
@@ -43,10 +45,10 @@ static void readInputs(void* arg) {
   while (1)
   {
     if( xSemaphoreTake( xSemaphore, ( TickType_t ) 20 ) == pdTRUE ){
-      inputs.input1 = digitalRead(PA11);
-      inputs.input2 = digitalRead(PA12);
-      if (inputs.input1 == 0) { digitalWrite(PA6,HIGH);}
-      else { digitalWrite(PA6,LOW);}
+      inputs.input1 = digitalRead(PA12);
+      inputs.input2 = digitalRead(PA11);
+      if (inputs.input1 == 0) loadCell.setPointActive =true;
+      if (inputs.input2 == 0) loadCell.setPointActive =false;
       xSemaphoreGive(xSemaphore);
     }
     vTaskDelay(1);
@@ -54,9 +56,11 @@ static void readInputs(void* arg) {
 }
 
 
+
+
 static void readLoadCell(void* arg) {
   UNUSED(arg);
-  scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
+  scale.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN,128);
   delay(200);
   scale.set_scale(settings.scaleVal);  
   scale.power_up();
@@ -65,9 +69,7 @@ static void readLoadCell(void* arg) {
   while (1)
   {
     if( xSemaphoreTake( xSemaphore, ( TickType_t ) 20 ) == pdTRUE ){
-      scale.power_up();
-      loadCell.value = scale.get_units(15);
-      scale.power_down();
+      getWeight();
       xSemaphoreGive(xSemaphore);
     }
     vTaskDelay(1);
@@ -77,44 +79,72 @@ static void readLoadCell(void* arg) {
 
 static void loadcellAnalysis(void* arg) {
   UNUSED(arg);
+  digitalWrite(PB2,HIGH);
   pinMode(PB2,OUTPUT);
-  pinMode(PB7,OUTPUT);
+
+  digitalWrite(PB10,HIGH);
+  pinMode(PB10,OUTPUT);
+
+  bool firstLOW = true;
+  bool firstHIGH = true;
   while (1)
   {
+   buzzer.loop(); 
     if( xSemaphoreTake( xSemaphore, ( TickType_t ) 20 ) == pdTRUE ){
       if (loadCell.setPointActive)
       {
         if (loadCell.value <= settings.setPointLow)
         {
+          if (firstLOW)
+          {
+            firstLOW = false;
+            firstHIGH = true;
+            buzzer.beep(75,100);
+            buzzer.beep(75);
+          }
           loadCell.highSetPoint = false;
           loadCell.lowSetPoint = true;
-          digitalWrite(PB7,HIGH);
           digitalWrite(PB2,LOW);
+          digitalWrite(PB10,HIGH);
         }
         else if (loadCell.value > settings.setPointLow && loadCell.value <= settings.setPointHigh)
         {
+          if (firstHIGH)
+          {
+            buzzer.beep(75,50);
+            firstLOW = true;
+            buzzer.beep(75,50);
+            firstHIGH = false;
+            buzzer.beep(75);
+          }
           loadCell.highSetPoint = true;
           loadCell.lowSetPoint = false;
-          digitalWrite(PB7,LOW);
           digitalWrite(PB2,HIGH);
+          digitalWrite(PB10,LOW);
         }
         else
         {
+          if (loadCell.highSetPoint && !loadCell.lowSetPoint)
+          {
+            buzzer.beep(600,200);
+            firstLOW = true;
+            buzzer.beep(1000);
+            firstHIGH = true;
+          }
           loadCell.setPointActive = false;
           loadCell.highSetPoint = false;
           loadCell.lowSetPoint = false;
-          digitalWrite(PB7,LOW);
-          digitalWrite(PB2,LOW);  
+          digitalWrite(PB2,HIGH);
+          digitalWrite(PB10,HIGH);
         }
-
       }
       else
       {
         loadCell.setPointActive = false;
-          loadCell.highSetPoint = false;
-          loadCell.lowSetPoint = false;
-          digitalWrite(PB7,LOW);
-          digitalWrite(PB2,LOW);
+        loadCell.highSetPoint = false;
+        loadCell.lowSetPoint = false;
+        digitalWrite(PB2,HIGH);
+        digitalWrite(PB10,HIGH);
       }
 
       
@@ -139,7 +169,8 @@ void setup() {
   // settings.setPointHigh = 8000;
   // settings.setPointLow = 3000;
   // settings.unit = 0;
-  // memoryReadSetting();
+  // settings.avgCount = 5;
+  // settings.zeroFilter = 3;
   // memoryWriteSetting();
   if (xSemaphore != NULL) {
 

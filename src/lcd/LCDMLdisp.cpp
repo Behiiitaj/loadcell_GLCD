@@ -46,6 +46,8 @@ float loadCellValue = 0;  // time counter (global variable)
   
 #include <stm32f1xx_hal_spi.h>
 SPI_HandleTypeDef SpiHandle;
+const char* units[6]= { "gm", "kg", "ton", "N","N.m","N.kg" };
+const float ratioList[7]= { 1000, 100, 10, 1 , 0.1 , 0.01 , 0.001 };
 
 
 
@@ -118,6 +120,9 @@ void mFunc_settings(uint8_t param);
 void mFunc_highSetpoint(uint8_t param);
 void mFunc_lowSetpoint(uint8_t param);
 void mFunc_password(uint8_t param);
+void mFunc_resetFactory(uint8_t param);
+void mfunc_avgCount(uint8_t param);
+void mfunc_zeroFilter(uint8_t param);
 void lcdml_menu_clear();
 void lcdml_menu_display();
 void mDyn_para(uint8_t line);
@@ -133,28 +138,32 @@ void lcdml_menu_control(void);
 // *********************************************************************
 // LCDML MENU/DISP
 // *********************************************************************
-  LCDML_add         (0  , LCDML_0         , 1  , "Tare"                  , mFunc_tare);        
-  LCDML_add         (1  , LCDML_0         , 2  , "Settings"              , mFunc_settingsPassword);                    
+  LCDML_add         (0  , LCDML_0         , 1  , "Settings"              , mFunc_settingsPassword);                    
 
 
-  LCDML_addAdvanced (2  , LCDML_0         , 3  , COND_hide,  "Settings_SIKIM"     , NULL,          0,   _LCDML_TYPE_default); 
-  LCDML_add         (3  , LCDML_0_3       , 1  , "Scale"                 , mFunc_scale);
-  LCDML_addAdvanced (4  , LCDML_0_3       , 2  , NULL, "Unit"            , mFunc_unit,           1, _LCDML_TYPE_default);                 
-  LCDML_addAdvanced (5  , LCDML_0_3       , 3  , NULL, "Ratio"           , mFunc_ratio,          settings.ratio, _LCDML_TYPE_default);
-  LCDML_addAdvanced (6  , LCDML_0_3       , 4  , NULL, "Coefficent"      , mFunc_coefficent,     settings.unit, _LCDML_TYPE_default);
-  LCDML_add         (7  , LCDML_0_3       , 5  , "Set points"            , NULL);                     
-  LCDML_addAdvanced (8  , LCDML_0_3       , 6  , COND_hide,  "1"         , mFunc_settings,                      0,_LCDML_TYPE_default);
-  LCDML_addAdvanced (9  , LCDML_0_3_5     , 1  , NULL, "High point"      , mFunc_highSetpoint,   settings.setPointHigh, _LCDML_TYPE_default);                     
-  LCDML_addAdvanced (10 , LCDML_0_3_5     , 2  , NULL, "Low point"       , mFunc_lowSetpoint,    settings.setPointLow, _LCDML_TYPE_default);              
-  LCDML_addAdvanced (11 , LCDML_0_3_5     , 3  , NULL, "Hysteresis"      , mFunc_hysteresis,     settings.Hysteresis, _LCDML_TYPE_default);
-  LCDML_addAdvanced (12 , LCDML_0_3       , 7  , NULL, "Change password" , mFunc_password,       settings.password, _LCDML_TYPE_default);   
+  LCDML_addAdvanced (1  , LCDML_0         , 2  , COND_hide,  "Settings_SIKIM"     , NULL,          0,   _LCDML_TYPE_default); 
+  LCDML_add         (2  , LCDML_0_2       , 1  , "Tare"                  , mFunc_tare);        
+  LCDML_add         (3  , LCDML_0_2       , 2  , "Scale"                 , mFunc_scale);
+  LCDML_addAdvanced (4  , LCDML_0_2       , 3  , NULL, "Unit"            , mFunc_unit,           1, _LCDML_TYPE_default);                 
+  LCDML_addAdvanced (5  , LCDML_0_2       , 4  , NULL, "Ratio"           , mFunc_ratio,          settings.ratio, _LCDML_TYPE_default);
+  LCDML_addAdvanced (6  , LCDML_0_2       , 5  , NULL, "Coefficent"      , mFunc_coefficent,     settings.unit, _LCDML_TYPE_default);
+  LCDML_add         (7  , LCDML_0_2       , 6  , "Set points"            , NULL);                     
+  LCDML_addAdvanced (8  , LCDML_0_2       , 7  , COND_hide,  "1"         , mFunc_settings,                      0,_LCDML_TYPE_default);
+  LCDML_addAdvanced (9  , LCDML_0_2_6     , 1  , NULL, "High point"      , mFunc_highSetpoint,   settings.setPointHigh, _LCDML_TYPE_default);                     
+  LCDML_addAdvanced (10 , LCDML_0_2_6     , 2  , NULL, "Low point"       , mFunc_lowSetpoint,    settings.setPointLow, _LCDML_TYPE_default);              
+  LCDML_addAdvanced (11 , LCDML_0_2_6     , 3  , NULL, "Hysteresis"      , mFunc_hysteresis,     settings.Hysteresis, _LCDML_TYPE_default);
+  LCDML_add         (12 , LCDML_0_2       , 8  , "Filteration"           , NULL);  
+  LCDML_addAdvanced (13 , LCDML_0_2_8     , 1  , NULL, "Avg count"       , mfunc_avgCount,     50, _LCDML_TYPE_default);
+  LCDML_addAdvanced (14 , LCDML_0_2_8     , 2  , NULL, "Zero filter"     , mfunc_zeroFilter,     50, _LCDML_TYPE_default);
+  LCDML_addAdvanced (15 , LCDML_0_2       , 9  , NULL, "Change password" , mFunc_password,       settings.password, _LCDML_TYPE_default);   
+  LCDML_addAdvanced (16 , LCDML_0_2       , 10 , NULL, "Reset Factory"   , mFunc_resetFactory,       settings.password, _LCDML_TYPE_default);  
 
 
-  LCDML_addAdvanced (13 , LCDML_0         , 6  , COND_hide,  "screensaver"        , mFunc_screensaver,        0,   _LCDML_TYPE_default);     
-  LCDML_addAdvanced (14 , LCDML_0         , 7  , COND_hide,  "welcomePage"        , mFunc_welcomePage,        0,   _LCDML_TYPE_default);
+  LCDML_addAdvanced (17 , LCDML_0         , 3  , COND_hide,  "screensaver"        , mFunc_screensaver,        0,   _LCDML_TYPE_default);     
+  LCDML_addAdvanced (18 , LCDML_0         , 4  , COND_hide,  "welcomePage"        , mFunc_welcomePage,        0,   _LCDML_TYPE_default);
 
 
-  #define _LCDML_DISP_cnt    14
+  #define _LCDML_DISP_cnt    18
   LCDML_createMenu(_LCDML_DISP_cnt);
 
 
@@ -173,7 +182,7 @@ void lcdml_menu_control(void);
     LCDML_setup(_LCDML_DISP_cnt);
 
     LCDML.MENU_enRollover();
-    LCDML.SCREEN_enable(mFunc_screensaver, 5000); 
+    LCDML.SCREEN_enable(mFunc_screensaver, 9000); 
     LCDML.OTHER_jumpToFunc(mFunc_welcomePage); 
   }
 
@@ -213,6 +222,8 @@ boolean COND_hide()  // hide a menu element
 #if(_LCDML_CONTROL_cfg == 2)
 // settings
   unsigned long g_LCDML_DISP_press_time = 0;
+  unsigned long g_LCDML_CONTROL_button_press_time = millis();
+  bool  g_LCDML_CONTROL_button_prev       = HIGH;
 
   #define _LCDML_CONTROL_digital_low_active      0   
   #define _LCDML_CONTROL_digital_enable_quit     1
@@ -226,6 +237,7 @@ boolean COND_hide()  // hide a menu element
 // *********************************************************************
 void lcdml_menu_control(void)
 {
+  bool g_LCDML_button                      = digitalRead(PA3);
   // If something must init, put in in the setup condition
   if(LCDML.BT_setup()) {
     // runs only once
@@ -262,15 +274,15 @@ void lcdml_menu_control(void)
   #endif
 
   if (but_stat > 0) {
-    if((millis() - g_LCDML_DISP_press_time) >= 200) {
+    if((millis() - g_LCDML_DISP_press_time) >= 220) {
       g_LCDML_DISP_press_time = millis(); // reset press time
 
-      if (bitRead(but_stat, 0)) { LCDML.BT_enter(); }
-      if (bitRead(but_stat, 1)) { LCDML.BT_up();    }
-      if (bitRead(but_stat, 2)) { LCDML.BT_down();  }
-      if (bitRead(but_stat, 3)) { LCDML.BT_quit();  }
-      if (bitRead(but_stat, 4)) { LCDML.BT_left();  }
-      if (bitRead(but_stat, 5)) { LCDML.BT_right(); }
+      if (bitRead(but_stat, 0)) { LCDML.BT_enter(); digitalWrite(PB7,HIGH); delay(75); digitalWrite(PB7,LOW);}
+      if (bitRead(but_stat, 1)) { LCDML.BT_up();   digitalWrite(PB7,HIGH); delay(75); digitalWrite(PB7,LOW); }
+      if (bitRead(but_stat, 2)) { LCDML.BT_down();  digitalWrite(PB7,HIGH); delay(75); digitalWrite(PB7,LOW);}
+      if (bitRead(but_stat, 3)) { LCDML.BT_quit(); digitalWrite(PB7,HIGH); delay(75); digitalWrite(PB7,LOW); }
+      if (bitRead(but_stat, 4)) { LCDML.BT_left();  digitalWrite(PB7,HIGH); delay(75); digitalWrite(PB7,LOW);}
+      if (bitRead(but_stat, 5)) { LCDML.BT_right(); digitalWrite(PB7,HIGH); delay(75); digitalWrite(PB7,LOW); }
     }
   }
 }
@@ -488,32 +500,27 @@ void mFunc_tare(uint8_t param)
   {
     LCDML_UNUSED(param);
     tareLoadCell();
-  
-    LCDML.OTHER_jumpToFunc(mFunc_screensaver);
+    LCDML.OTHER_jumpToFunc(mFunc_settings);
   }
 }
 
 
 
-const char* units[6]= { "gm", "kgs", "t", "N","N.m","N.kgs" };
-const float ratioList[7]= { 1000, 100, 10, 1 , 0.1 , 0.01 , 0.001 };
+
 int currentNumberUnit = 0;
 bool isEnterUnit = false;
 // *********************************************************************
 void mFunc_unit(uint8_t param)
 // *********************************************************************
 {
-    isEnterUnit = false;
+  isEnterUnit = false;
   if(LCDML.FUNC_setup())          // ****** SETUP *********
   {
-    if (param==1)
-    {
-      LCDML.FUNC_goBackToMenu();
-    }else{
+    
     currentNumberUnit = settings.unit;
     // remmove compiler warnings when the param variable is not used:
     LCDML_UNUSED(param);
-    }
+    
     
   }
 
@@ -540,7 +547,7 @@ void mFunc_unit(uint8_t param)
         u8g2.clear();
         
         u8g2.drawRFrame(0,0,128,64,7);
-        u8g2.drawRFrame(37,21,50,20,7);
+        u8g2.drawRFrame(37,21,55,20,7);
         u8g2.setFont(u8g_font_6x10r);
         u8g2.drawStr(6,10,"Select your unit.");
         
@@ -551,7 +558,191 @@ void mFunc_unit(uint8_t param)
         if (isEnterUnit)
         {
           memoryWriteSetting();
-          LCDML.FUNC_goBackToMenu(2);
+          LCDML.OTHER_jumpToFunc(mFunc_settings);
+        }
+
+    } while( u8g2.nextPage() );
+  }
+
+
+  LCDML.FUNC_disableScreensaver();
+  if(LCDML.FUNC_close())      // ****** STABLE END *********
+  {
+    // you can here reset some global vars or do nothing
+  }
+}
+
+
+int currentNumberAvgCount = 1;
+bool isEnterAvgCount = false;
+// *********************************************************************
+void mfunc_avgCount(uint8_t param)
+// *********************************************************************
+{
+  isEnterAvgCount = false;
+  if(LCDML.FUNC_setup())          // ****** SETUP *********
+  {
+    currentNumberAvgCount = settings.avgCount;
+    LCDML_UNUSED(param);
+  }
+
+  if(LCDML.FUNC_loop())           // ****** LOOP *********
+  {
+      if(LCDML.BT_checkDown())
+      {
+        currentNumberAvgCount--;
+        if (currentNumberAvgCount == 0) currentNumberAvgCount = 15;
+      }
+      if (LCDML.BT_checkQuit())
+      {
+        LCDML.FUNC_goBackToMenu(3);
+      }
+      if(LCDML.BT_checkEnter())
+      {
+        isEnterAvgCount = true;
+      }
+    do {
+        u8g2.clear();
+        
+        u8g2.drawRFrame(0,0,128,64,7);
+        u8g2.drawRFrame(37,30,50,20,7);
+        u8g2.setFont(u8g_font_6x10r);
+        u8g2.drawStr(6,10,"Enter number of");
+        u8g2.drawStr(6,20,"loadCell sampling.");
+        
+        u8g2.setFont(u8g_font_9x18Br);
+
+        u8g2.drawStr(45,44, String(currentNumberAvgCount).c_str() );
+
+        if (isEnterAvgCount)
+        {
+          settings.avgCount = currentNumberAvgCount;
+          memoryWriteSetting();
+          LCDML.OTHER_jumpToFunc(mFunc_settings);
+        }
+
+    } while( u8g2.nextPage() );
+  }
+
+
+  LCDML.FUNC_disableScreensaver();
+  if(LCDML.FUNC_close())      // ****** STABLE END *********
+  {
+    // you can here reset some global vars or do nothing
+  }
+}
+
+
+int currentNumberZeroFilter = 1;
+bool isEnterZeroFilter = false;
+// *********************************************************************
+void mfunc_zeroFilter(uint8_t param)
+// *********************************************************************
+{
+  isEnterZeroFilter = false;
+  if(LCDML.FUNC_setup())          // ****** SETUP *********
+  {
+    currentNumberZeroFilter = settings.zeroFilter;
+    LCDML_UNUSED(param);
+  }
+
+  if(LCDML.FUNC_loop())           // ****** LOOP *********
+  {
+      if(LCDML.BT_checkDown())
+      {
+        currentNumberZeroFilter--;
+        if (currentNumberZeroFilter == 0) currentNumberZeroFilter = 15;
+      }
+      if (LCDML.BT_checkQuit())
+      {
+        LCDML.FUNC_goBackToMenu(3);
+      }
+      if(LCDML.BT_checkEnter())
+      {
+        isEnterZeroFilter = true;
+      }
+    do {
+        u8g2.clear();
+        
+        u8g2.drawRFrame(0,0,128,64,7);
+        u8g2.drawRFrame(37,30,50,20,7);
+        u8g2.setFont(u8g_font_6x10r);
+        u8g2.drawStr(6,10,"How much filter");
+        u8g2.drawStr(6,20,"zero value.");
+        
+        u8g2.setFont(u8g_font_9x18Br);
+
+        u8g2.drawStr(45,44, String(currentNumberZeroFilter).c_str() );
+
+        if (isEnterZeroFilter)
+        {
+          settings.zeroFilter = currentNumberZeroFilter;
+          memoryWriteSetting();
+          LCDML.OTHER_jumpToFunc(mFunc_settings);
+        }
+
+    } while( u8g2.nextPage() );
+  }
+
+
+  LCDML.FUNC_disableScreensaver();
+  if(LCDML.FUNC_close())      // ****** STABLE END *********
+  {
+    // you can here reset some global vars or do nothing
+  }
+}
+
+
+
+int currentNumberReset = 0;
+bool isEnterReset = false;
+const char* resetOptions[2]= { "No","Yes" };
+// *********************************************************************
+void mFunc_resetFactory(uint8_t param)
+// *********************************************************************
+{
+  isEnterReset = false;
+  if(LCDML.FUNC_setup())          // ****** SETUP *********
+  {
+    LCDML_UNUSED(param);
+  }
+
+  if(LCDML.FUNC_loop())           // ****** LOOP *********
+  {
+      if(LCDML.BT_checkDown())
+      {
+        if (currentNumberReset == 0) currentNumberReset =1;
+        else currentNumberReset = 0;
+      }
+      if (LCDML.BT_checkQuit())
+      {
+        LCDML.FUNC_goBackToMenu(3);
+      }
+      if(LCDML.BT_checkEnter())
+      {
+        isEnterReset = true;
+      }
+    do {
+        u8g2.clear();
+        
+        u8g2.drawRFrame(0,0,128,64,7);
+        u8g2.drawRFrame(37,21,50,20,7);
+        u8g2.setFont(u8g_font_6x10r);
+        u8g2.drawStr(6,10,"Reset, Are you sure?");
+        
+        u8g2.setFont(u8g_font_9x18Br);
+
+        u8g2.drawStr(45,35,resetOptions[currentNumberReset]);
+
+        if (isEnterReset)
+        {
+          if (currentNumberReset == 1)
+          {
+            loadDefaultSetting();
+            memoryWriteSetting();
+          }
+          
+          LCDML.OTHER_jumpToFunc(mFunc_settings);
         }
 
     } while( u8g2.nextPage() );
@@ -620,7 +811,7 @@ void mFunc_ratio(uint8_t param)
         if (isEnterRatio)
         {
           memoryWriteSetting();
-          LCDML.FUNC_goBackToMenu(2);
+          LCDML.OTHER_jumpToFunc(mFunc_settings);
         }
 
     } while( u8g2.nextPage() );
@@ -853,7 +1044,7 @@ void mFunc_highSetpoint(uint8_t param)
           settings.setPointHigh = result;
           memoryWriteSetting();
 
-          LCDML.OTHER_jumpToFunc(mFunc_screensaver);
+          LCDML.OTHER_jumpToFunc(mFunc_settings);
         }
         switch (currentNumberSetpointHigh)
         {
@@ -981,7 +1172,7 @@ void mFunc_lowSetpoint(uint8_t param)
           settings.setPointLow = result;
           memoryWriteSetting();
 
-          LCDML.OTHER_jumpToFunc(mFunc_screensaver);
+          LCDML.OTHER_jumpToFunc(mFunc_settings);
         }
         switch (currentNumberSetpointLow)
         {
@@ -1103,7 +1294,7 @@ void mFunc_hysteresis(uint8_t param)
           settings.Hysteresis = result;
           memoryWriteSetting();
 
-          LCDML.OTHER_jumpToFunc(mFunc_screensaver);
+          LCDML.OTHER_jumpToFunc(mFunc_settings);
         }
         switch (currentNumbernumberhysteresis)
         {
@@ -1146,7 +1337,7 @@ void mFunc_scale(uint8_t param)
 
   int8_t xFont = 30;
   int8_t xAddation = 15;
-  int8_t yFont = 52;
+  int8_t yFont = 55;
   int8_t rectSize = 15;
   int8_t borderRadius = 6;
 
@@ -1155,6 +1346,7 @@ void mFunc_scale(uint8_t param)
   {
     // remmove compiler warnings when the param variable is not used:
     LCDML_UNUSED(param);
+    LCDML.FUNC_setLoopInterval(1);  
   }
 
 
@@ -1194,15 +1386,45 @@ void mFunc_scale(uint8_t param)
 
         isEnter = true;
       }
+      u8g2.firstPage();
     do {
-        u8g2.clear();
+        // u8g2.clear();
         
         u8g2.drawRFrame(0,0,128,64,borderRadius);
         u8g2.setFont(u8g_font_6x10r);
-        u8g2.drawStr(6,10,"Put your sample on");
-        u8g2.drawStr(6,20,"loadcell and enter");
-        u8g2.drawStr(6,30,"its weight.");
+        u8g2.drawStr(6,10,"Enter sample weight.");
+
+        scale.power_up();
+        float a = scale.read_average(1);
+        float b = loadCell.value;
+        scale.power_down();
+
+        char buf1[40];
+        char buf2[40];
+        dtostrf (a,4, 1, buf1);
+        dtostrf (b,4, 1, buf2);
         
+        u8g2.setFont(u8g_font_5x8r);
+        u8g2.drawStr(6,26,"Pure val   -> ");
+        u8g2.drawStr(76,26,String(buf1).c_str());
+
+        u8g2.drawStr(6,34,"Scaled val -> ");
+        if (loadCell.isOver)
+        {
+          u8g2.drawStr(76,34,String("-OVER!-").c_str());
+        }
+        else
+        {
+          loadCellValue = loadCell.value; 
+          char buf[40];
+          if ((loadCellValue >0 && loadCellValue<settings.zeroFilter) || ((loadCellValue <0 && loadCellValue>(settings.zeroFilter*-1))))
+          {
+            loadCellValue = 0;
+          }
+          dtostrf (loadCellValue,4, 1, buf);
+          u8g2.drawStr( 76, 34, buf);
+        }
+
         u8g2.setFont(u8g_font_9x18Br);
         sprintf (bufNumber1, "%d", number1);
         u8g2.drawStr(xFont,yFont,bufNumber1);
@@ -1219,22 +1441,24 @@ void mFunc_scale(uint8_t param)
         if (isEnter)
         {
           float weight = (number1*1000) + (number2*100) + (number3*10) + number4;
-          calibrateLoadCell(weight);
-          LCDML.OTHER_jumpToFunc(mFunc_screensaver);
+          if (weight > 0)
+          {
+            calibrateLoadCell(weight);
+          }
         }
         switch (currentNumber)
         {
         case 1:
-          u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumber-1)),(40),rectSize,rectSize,borderRadius);
+          u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumber-1)),(43),rectSize,rectSize,borderRadius);
           break;
         case 2:
-          u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumber-1)),(40),rectSize,rectSize,borderRadius);
+          u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumber-1)),(43),rectSize,rectSize,borderRadius);
           break;
         case 3:
-          u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumber-1)),(40),rectSize,rectSize,borderRadius);
+          u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumber-1)),(43),rectSize,rectSize,borderRadius);
           break;
         case 4:
-          u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumber-1)),(40),rectSize,rectSize,borderRadius);
+          u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumber-1)),(43),rectSize,rectSize,borderRadius);
           break;
         }
     } while( u8g2.nextPage() );
@@ -1373,7 +1597,7 @@ void mFunc_coefficent(uint8_t param)
 
 
           memoryWriteSetting();
-          LCDML.OTHER_jumpToFunc(mFunc_screensaver);
+          LCDML.OTHER_jumpToFunc(mFunc_settings);
         }
         switch (currentNumberCoefficent)
         {
@@ -1427,7 +1651,7 @@ void mFunc_settings(uint8_t param)
   bool isEnter = false;
   if(LCDML.FUNC_setup())          // ****** SETUP *********
   {
-    LCDML.OTHER_setCursorToID(3);
+    LCDML.OTHER_setCursorToID(2);
     LCDML.FUNC_goBackToMenu();
     // remmove compiler warnings when the param variable is not used:
     LCDML_UNUSED(param);
@@ -1748,13 +1972,26 @@ void mFunc_welcomePage(uint8_t param)
     LCDML_UNUSED(param);
     u8g2.firstPage();
     do {
-      u8g2.setFont(u8g_font_7x13B);
       u8g2.drawRFrame(0,0,128,64,7);
-      u8g2.drawXBMP(8,7,50,50,h123_bits);
-      u8g2.drawStr(75,28,"SMART");
-      u8g2.drawStr(65,40,"LOADCELL");
-      u8g2.setFont(u8g_font_6x10r);
-      u8g2.drawStr(82,60,"V0.1");
+
+
+      u8g2.drawRFrame(4,4,50,56,7);
+      u8g2.setFont(u8g_font_5x8r);
+      u8g2.drawStr(14,13,"model:");
+      u8g2.setFont(u8g_font_profont29);
+      u8g2.drawStr(13,37,"ND");
+      u8g2.setFont(u8g_font_profont17r);
+      u8g2.drawStr(31,52,"12");
+
+      //GB PICTURE
+      // u8g2.drawXBMP(8,7,50,50,h123_bits);
+
+      u8g2.setFont(u8g_font_6x12);
+      u8g2.drawStr(78,19,"SMART");
+      u8g2.drawStr(75,31,"WEIGHT");
+      u8g2.drawStr(65,43,"INDICATOR");
+      u8g2.setFont(u8g_font_5x8);
+      u8g2.drawStr(82,60,"V0.2");
     } while( u8g2.nextPage() );
 
   }
@@ -1769,20 +2006,6 @@ void mFunc_welcomePage(uint8_t param)
     
   }
 }
-
-float getLoadcellValue(){
-  // scale.power_up();
-  // float result = scale.get_units(10);
-  // float ratio = settings.ratio;
-  // float coefficent = settings.coefficent;
-
-  // result*= ratio;   //ratio
-  // result*= ratio;   //coefficent
-
-  // scale.power_down();
-}
-
-
 
 
 int16_t numberSettingsPassword1 = 0;
@@ -1922,26 +2145,42 @@ void mFunc_screensaver(uint8_t param)
     {
       LCDML.FUNC_goBackToMenu(); 
     }
+    if (LCDML.BT_checkEnter())
+    {
+      if (LCDML.BT_checkUp())
+      {
+        tareLoadCell();
+      }  
+    }
     if (LCDML.BT_checkDown()) 
     {
-      loadCell.setPointActive = true; 
+      if (loadCell.setPointActive) loadCell.setPointActive = false;
+      else loadCell.setPointActive = true; 
     }
-      loadCellValue = (loadCell.value*ratioList[settings.ratio]* settings.coefficent) ; 
-      // loadCellValue = loadCell.value;
-      char buf[40];
-      if ((loadCellValue >0 && loadCellValue<1) || ((loadCellValue <0 && loadCellValue>-1)))
-      {
-        loadCellValue = 0;
-      }
-      dtostrf (loadCellValue,4, 1, buf);
+    
 
       u8g2.firstPage();
       do {
-        u8g2.setFont(u8g2_font_inr21_mn);
-        u8g2.drawStr( 10, 43, buf);
+        if (loadCell.isOver)
+        {
+          u8g2.setFont(u8g2_font_inr21_mr);
+          u8g2.drawStr(13,43,String("OVER!!").c_str());
+        }
+        else
+        {
+          loadCellValue = loadCell.value; 
+          char buf[40];
+          if ((loadCellValue >0 && loadCellValue<settings.zeroFilter) || ((loadCellValue <0 && loadCellValue>(settings.zeroFilter*-1))))
+          {
+            loadCellValue = 0;
+          }
+          dtostrf (loadCellValue,4, 1, buf);
+          u8g2.setFont(u8g2_font_inr21_mn);
+          u8g2.drawStr( 10, 43, buf);
+        }
 
         u8g2.setFont(u8g2_font_6x10_mr);
-        u8g2.drawStr(91,60, String("["+String(units[settings.unit])+"]").c_str());
+        u8g2.drawStr(86,60, String("["+String(units[settings.unit])+"]").c_str());
         
         char screenRatio[10];
         dtostrf(ratioList[settings.ratio],4,3,screenRatio);
