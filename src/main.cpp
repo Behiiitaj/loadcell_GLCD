@@ -150,7 +150,13 @@ static void loadcellAnalysis(void* arg) {
       
       xSemaphoreGive(xSemaphore);
     }
-    vTaskDelay(1);
+    // digitalWrite(PB2,LOW);
+    // digitalWrite(PB10,LOW);
+    // delay(500);
+    // digitalWrite(PB2,HIGH);
+    // digitalWrite(PB10,HIGH);
+    // delay(500);
+    // vTaskDelay(1);
   }
 }
 
@@ -161,16 +167,6 @@ void setup() {
   portBASE_TYPE s1, s2, s3, s4;
 
   // loadDefaultSetting();
-  // settings.password = 000;
-  // settings.scaleVal = 100000;
-  // settings.ratio = 1;
-  // settings.coefficent = 1;
-  // settings.Hysteresis = 0;
-  // settings.setPointHigh = 8000;
-  // settings.setPointLow = 3000;
-  // settings.unit = 0;
-  // settings.avgCount = 5;
-  // settings.zeroFilter = 3;
   // memoryWriteSetting();
   if (xSemaphore != NULL) {
 

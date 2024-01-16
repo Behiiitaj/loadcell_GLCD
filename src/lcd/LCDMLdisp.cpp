@@ -182,7 +182,7 @@ void lcdml_menu_control(void);
     LCDML_setup(_LCDML_DISP_cnt);
 
     LCDML.MENU_enRollover();
-    LCDML.SCREEN_enable(mFunc_screensaver, 9000); 
+    LCDML.SCREEN_enable(mFunc_screensaver, 10000); 
     LCDML.OTHER_jumpToFunc(mFunc_welcomePage); 
   }
 
@@ -489,18 +489,86 @@ void lcdml_menu_display()
 
 
 
-
-
-
+const char* resetOptions[2]= { "No","Yes" };
+int currentNumberTare = 0;
+bool isEnterTare;
 // *********************************************************************
 void mFunc_tare(uint8_t param)
 // *********************************************************************
 {
+  isEnterTare = false;
   if(LCDML.FUNC_setup())          // ****** SETUP *********
   {
     LCDML_UNUSED(param);
-    tareLoadCell();
-    LCDML.OTHER_jumpToFunc(mFunc_settings);
+    LCDML.FUNC_setLoopInterval(1);
+  }
+
+  if(LCDML.FUNC_loop())           // ****** LOOP *********
+  {
+      if(LCDML.BT_checkDown())
+      {
+        if (currentNumberTare == 0) currentNumberTare =1;
+        else currentNumberTare = 0;
+      }
+      if (LCDML.BT_checkQuit())
+      {
+        LCDML.FUNC_goBackToMenu(3);
+      }
+      if(LCDML.BT_checkEnter())
+      {
+        isEnterTare = true;
+      }
+      u8g2.firstPage();
+    do {
+        // u8g2.clear();
+        
+        u8g2.drawRFrame(0,0,128,64,7);
+        u8g2.drawRFrame(37,35,50,20,7);
+        u8g2.setFont(u8g_font_6x10r);
+        u8g2.drawStr(6,10,"Tare, Are you sure?");
+        
+        u8g2.setFont(u8g_font_9x18Br);
+
+        u8g2.drawStr(45,49,resetOptions[currentNumberTare]);
+
+
+        u8g2.setFont(u8g_font_5x8r);
+        u8g2.drawStr(6,26,"Scaled val -> ");
+        if (loadCell.isOver)
+        {
+          u8g2.drawStr(76,26,String("-OVER!-").c_str());
+        }
+        else
+        {
+          loadCellValue = loadCell.value; 
+          char buf[40];
+          // if ((loadCellValue >0 && loadCellValue<settings.zeroFilter) || ((loadCellValue <0 && loadCellValue>(settings.zeroFilter*-1))))
+          // {
+          //   loadCellValue = 0;
+          // }
+          dtostrf (loadCellValue,4, 1, buf);
+          u8g2.drawStr( 76, 26, buf);
+        }
+
+
+        if (isEnterTare)
+        {
+          if (currentNumberTare == 1)
+          {
+            tareLoadCell();
+            currentNumberTare = 0;
+          }
+          // LCDML.OTHER_jumpToFunc(mFunc_settings);
+        }
+
+    } while( u8g2.nextPage() );
+  }
+
+
+  LCDML.FUNC_disableScreensaver();
+  if(LCDML.FUNC_close())      // ****** STABLE END *********
+  {
+    // you can here reset some global vars or do nothing
   }
 }
 
@@ -696,7 +764,7 @@ void mfunc_zeroFilter(uint8_t param)
 
 int currentNumberReset = 0;
 bool isEnterReset = false;
-const char* resetOptions[2]= { "No","Yes" };
+
 // *********************************************************************
 void mFunc_resetFactory(uint8_t param)
 // *********************************************************************
@@ -1396,13 +1464,10 @@ void mFunc_scale(uint8_t param)
 
         scale.power_up();
         float a = scale.read_average(1);
-        float b = loadCell.value;
         scale.power_down();
 
         char buf1[40];
-        char buf2[40];
         dtostrf (a,4, 1, buf1);
-        dtostrf (b,4, 1, buf2);
         
         u8g2.setFont(u8g_font_5x8r);
         u8g2.drawStr(6,26,"Pure val   -> ");
@@ -1472,6 +1537,23 @@ void mFunc_scale(uint8_t param)
 }
 
 
+// Define a fixed-point type with 3 decimal places
+using FixedPoint = int;
+
+// Constants for scaling and unscaling
+const int ScaleFactor = 1000;  // 10^3 for 3 decimal places
+
+// Convert a floating-point number to fixed-point
+FixedPoint floatToFixed(double value) {
+    return static_cast<FixedPoint>(value * ScaleFactor);
+}
+
+// Convert a fixed-point number to floating-point
+double fixedToFloat(FixedPoint value) {
+    return static_cast<double>(value) / ScaleFactor;
+}
+
+
 int16_t numbercoefficent1 = 0;
 int16_t numbercoefficent2 = 0;
 int16_t numbercoefficent3 = 0;
@@ -1499,19 +1581,32 @@ void mFunc_coefficent(uint8_t param)
   bool isEnter = false;
   if(LCDML.FUNC_setup())          // ****** SETUP *********
   {
-    double originalNumber = settings.coefficent;
-    // Extract the integer part
-    int integerPart = static_cast<int>(originalNumber);
-    int integerPart2 = static_cast<int>(originalNumber*1000);
-    // Extract the decimal part
-    double decimalPart = originalNumber - integerPart;
-    // Split the integer part into individual digits
-    numbercoefficent1 = integerPart / 100;
-    numbercoefficent2 = (integerPart / 10) % 10;
-    numbercoefficent3 = (integerPart / 1) % 10;
-    numbercoefficent4 = (integerPart2 / 100)% 10;
-    numbercoefficent5 = (integerPart2 / 10) % 10;
-    numbercoefficent6 = (integerPart2 / 1) % 10;
+
+    FixedPoint fixedNumber = floatToFixed(settings.coefficent);
+    int integerPart = fixedNumber / ScaleFactor;
+    int decimalPart = fixedNumber % ScaleFactor;
+    int numbercoefficent1 = (integerPart / 100) % 10;
+    int numbercoefficent2 = (integerPart / 10) % 10;
+    int numbercoefficent3 = integerPart % 10;
+    int numbercoefficent4 = (decimalPart / 100) % 10;
+    int numbercoefficent5 = (decimalPart / 10) % 10;
+    int numbercoefficent6 = decimalPart % 10;
+
+
+
+    // double originalNumber = settings.coefficent;
+    // // Extract the integer part
+    // int integerPart = static_cast<int>(originalNumber);
+    // int integerPart2 = static_cast<int>(originalNumber*1000);
+    // // Extract the decimal part
+    // double decimalPart = originalNumber - integerPart;
+    // // Split the integer part into individual digits
+    // numbercoefficent1 = integerPart / 100;
+    // numbercoefficent2 = (integerPart / 10) % 10;
+    // numbercoefficent3 = (integerPart / 1) % 10;
+    // numbercoefficent4 = (integerPart2 / 100)% 10;
+    // numbercoefficent5 = (integerPart2 / 10) % 10;
+    // numbercoefficent6 = (integerPart2 / 1) % 10;
     // remmove compiler warnings when the param variable is not used:
     LCDML_UNUSED(param);
   }
@@ -1591,7 +1686,7 @@ void mFunc_coefficent(uint8_t param)
             (numbercoefficent5 * 0.01) + 
             (numbercoefficent6 * 0.001);
 
-          settings.coefficent = result;
+          settings.coefficent = (result);
 
           
 
@@ -1991,7 +2086,7 @@ void mFunc_welcomePage(uint8_t param)
       u8g2.drawStr(75,31,"WEIGHT");
       u8g2.drawStr(65,43,"INDICATOR");
       u8g2.setFont(u8g_font_5x8);
-      u8g2.drawStr(82,60,"V0.2");
+      u8g2.drawStr(82,60,"V0.5");
     } while( u8g2.nextPage() );
 
   }

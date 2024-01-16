@@ -15,7 +15,7 @@ typedef struct {
 
   float scaleVal;
   int ratio;
-  float coefficent;
+  double coefficent;
   uint16_t Hysteresis;
   uint16_t password;
   int unit;

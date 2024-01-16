@@ -27,32 +27,32 @@ void calibrateLoadCell(float weight){
 
 void getWeight(){
     scale.power_up();
-    float lastSample = loadCell.value;
-    float resultVal = lastSample;
-    float trueSampleCount = 0;
-    float sample = 0;
-    for (size_t i = 0; i < settings.avgCount; i++)
-    {
-        sample = scale.get_units(1);
-        if (abs(sample - lastSample) < 1 )
-        {
-            trueSampleCount ++;
-            resultVal +=sample;
-        }
-        lastSample=sample;
-    }
-    if (trueSampleCount>0)
-    {
-        loadCell.value = resultVal / trueSampleCount; 
-    }
-    
-    
-    // loadCell.pureADC = scale.read_average(1);
-    // if (loadCell.pureADC > 8300000 || loadCell.pureADC < -8300000) loadCell.isOver = true;
-    // else
+    // float lastSample = loadCell.value;
+    // float resultVal = lastSample;
+    // float trueSampleCount = 0;
+    // float sample = 0;
+    // for (size_t i = 0; i < settings.avgCount; i++)
     // {
-    //     loadCell.isOver = false;
-    //     loadCell.value = ( scale.get_units(settings.avgCount) * ratioList[settings.ratio] * settings.coefficent);
-    // } 
+    //     sample = scale.get_units(1);
+    //     if (abs(sample - lastSample) < 30 )
+    //     {
+    //         trueSampleCount ++;
+    //         resultVal +=sample;
+    //     }
+    //     lastSample=sample;
+    // }
+    // if (trueSampleCount>0)
+    // {
+    //     loadCell.value = resultVal / trueSampleCount; 
+    // }
+    
+    
+    loadCell.pureADC = scale.read_average(1);
+    if (loadCell.pureADC > 8300000 || loadCell.pureADC < -8300000) loadCell.isOver = true;
+    else
+    {
+        loadCell.isOver = false;
+        loadCell.value = ( scale.get_units(settings.avgCount) * ratioList[settings.ratio] * settings.coefficent);
+    } 
     scale.power_down();
 }
