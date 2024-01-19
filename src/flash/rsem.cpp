@@ -3,6 +3,7 @@
 SettingStruct settings;
 InputStruct inputs;
 LoadCellStruct loadCell;
+FunctionStruct functions;
 
 
 const uint16_t eeAddress = 0;
@@ -19,6 +20,11 @@ void loadDefaultSetting(void) {
   settings.unit = 0;
   settings.avgCount = 5;
   settings.zeroFilter = 1;
+  settings.currentFunction = 0;
+  settings.dosingFunction.cycleCount = 20;
+  settings.dosingFunction.highTime = 130;
+  settings.dosingFunction.lowTime = 100;
+  settings.dosingFunction.outputNumber = 1;
 }
 
 uint32_t internalFlashRead32bit(uint32_t address) {

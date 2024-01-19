@@ -9,6 +9,14 @@
 #define DEFAULT_SETTING_SAVED_ID                      0x5100
 
 
+
+typedef struct {
+  int outputNumber;
+  int cycleCount;
+  int highTime;
+  int lowTime;
+} DosingStruct;
+
 typedef struct {
   uint16_t saved;
   uint32_t uniqId[4];
@@ -23,8 +31,9 @@ typedef struct {
   int setPointLow;
   int zeroFilter;
   int avgCount;
+  int currentFunction;
+  DosingStruct dosingFunction;
 } SettingStruct;
-
 
 typedef struct {
   int input1;
@@ -35,11 +44,17 @@ typedef struct {
 typedef struct {
   float value;
   float pureADC;
-  bool highSetPoint;
-  bool lowSetPoint;
-  bool setPointActive;
   bool isOver;
 } LoadCellStruct;
+
+typedef struct {
+  bool functionActive;
+  bool highSetPoint;
+  bool lowSetPoint;
+  int currentCounterNumber;
+  bool dosingHigh;
+} FunctionStruct;
+
 
 void loadDefaultSetting(void);
 void memoryInit(void);

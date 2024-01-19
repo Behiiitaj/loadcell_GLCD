@@ -12,6 +12,7 @@ extern SettingStruct settings;
 extern InputStruct inputs;
 extern LoadCellStruct loadCell;
 extern HX711 scale;
+extern FunctionStruct functions;
 
 const int LOADCELL_DOUT_PIN = PB0;
 const int LOADCELL_SCK_PIN = PB1;
@@ -47,8 +48,8 @@ static void readInputs(void* arg) {
     if( xSemaphoreTake( xSemaphore, ( TickType_t ) 20 ) == pdTRUE ){
       inputs.input1 = digitalRead(PA12);
       inputs.input2 = digitalRead(PA11);
-      if (inputs.input1 == 0) loadCell.setPointActive =true;
-      if (inputs.input2 == 0) loadCell.setPointActive =false;
+      if (inputs.input1 == 0) functions.functionActive =true;
+      if (inputs.input2 == 0) functions.functionActive =false;
       xSemaphoreGive(xSemaphore);
     }
     vTaskDelay(1);
@@ -90,73 +91,100 @@ static void loadcellAnalysis(void* arg) {
   while (1)
   {
    buzzer.loop(); 
-    if( xSemaphoreTake( xSemaphore, ( TickType_t ) 20 ) == pdTRUE ){
-      if (loadCell.setPointActive)
+      if (settings.currentFunction ==0)
       {
-        if (loadCell.value <= settings.setPointLow)
+        if (functions.functionActive)
         {
-          if (firstLOW)
+          if (loadCell.value <= settings.setPointLow)
           {
-            firstLOW = false;
-            firstHIGH = true;
-            buzzer.beep(75,100);
-            buzzer.beep(75);
+            if (firstLOW)
+            {
+              firstLOW = false;
+              firstHIGH = true;
+              buzzer.beep(75,100);
+              buzzer.beep(75);
+            }
+            functions.highSetPoint = false;
+            functions.lowSetPoint = true;
+            digitalWrite(PB2,LOW);
+            digitalWrite(PB10,HIGH);
           }
-          loadCell.highSetPoint = false;
-          loadCell.lowSetPoint = true;
-          digitalWrite(PB2,LOW);
-          digitalWrite(PB10,HIGH);
-        }
-        else if (loadCell.value > settings.setPointLow && loadCell.value <= settings.setPointHigh)
-        {
-          if (firstHIGH)
+          else if (loadCell.value > settings.setPointLow && loadCell.value <= settings.setPointHigh)
           {
-            buzzer.beep(75,50);
-            firstLOW = true;
-            buzzer.beep(75,50);
-            firstHIGH = false;
-            buzzer.beep(75);
+            if (firstHIGH)
+            {
+              buzzer.beep(75,50);
+              firstLOW = true;
+              buzzer.beep(75,50);
+              firstHIGH = false;
+              buzzer.beep(75);
+            }
+            functions.highSetPoint = true;
+            functions.lowSetPoint = false;
+            digitalWrite(PB2,HIGH);
+            digitalWrite(PB10,LOW);
           }
-          loadCell.highSetPoint = true;
-          loadCell.lowSetPoint = false;
-          digitalWrite(PB2,HIGH);
-          digitalWrite(PB10,LOW);
+          else
+          {
+            if (functions.highSetPoint && !functions.lowSetPoint)
+            {
+              buzzer.beep(600,200);
+              firstLOW = true;
+              buzzer.beep(1000);
+              firstHIGH = true;
+            }
+            functions.functionActive = false;
+            functions.highSetPoint = false;
+            functions.lowSetPoint = false;
+            digitalWrite(PB2,HIGH);
+            digitalWrite(PB10,HIGH);
+          }
         }
         else
         {
-          if (loadCell.highSetPoint && !loadCell.lowSetPoint)
-          {
-            buzzer.beep(600,200);
-            firstLOW = true;
-            buzzer.beep(1000);
-            firstHIGH = true;
-          }
-          loadCell.setPointActive = false;
-          loadCell.highSetPoint = false;
-          loadCell.lowSetPoint = false;
+          functions.functionActive = false;
+          functions.highSetPoint = false;
+          functions.lowSetPoint = false;
           digitalWrite(PB2,HIGH);
           digitalWrite(PB10,HIGH);
         }
       }
-      else
+      //--> Dosing pump
+      else if(settings.currentFunction ==1)
       {
-        loadCell.setPointActive = false;
-        loadCell.highSetPoint = false;
-        loadCell.lowSetPoint = false;
-        digitalWrite(PB2,HIGH);
-        digitalWrite(PB10,HIGH);
-      }
-
-      
-      xSemaphoreGive(xSemaphore);
+        if (functions.functionActive)
+        {
+          int dosingOutputNumber,fullTimeoutputNumber;
+          if (settings.dosingFunction.outputNumber==0)
+          {
+            dosingOutputNumber = PB10;
+            fullTimeoutputNumber = PB2;
+          }
+          else if (settings.dosingFunction.outputNumber==1)
+          {
+            dosingOutputNumber = PB2;
+            fullTimeoutputNumber = PB10;
+          }
+          digitalWrite(fullTimeoutputNumber,LOW);
+          for (int i = 0; i < settings.dosingFunction.cycleCount; i++)
+          {
+            if (functions.functionActive)
+            {
+              functions.currentCounterNumber = i+1;
+              functions.dosingHigh = true;
+              digitalWrite(dosingOutputNumber,LOW);
+              vTaskDelay(pdMS_TO_TICKS(settings.dosingFunction.highTime));
+              functions.dosingHigh = false;
+              digitalWrite(dosingOutputNumber,HIGH);
+              vTaskDelay(pdMS_TO_TICKS(settings.dosingFunction.lowTime));
+            }
+          }
+          functions.functionActive = false;
+          digitalWrite(PB2,HIGH);
+          digitalWrite(PB10,HIGH);
+        }
     }
-    // digitalWrite(PB2,LOW);
-    // digitalWrite(PB10,LOW);
-    // delay(500);
-    // digitalWrite(PB2,HIGH);
-    // digitalWrite(PB10,HIGH);
-    // delay(500);
-    // vTaskDelay(1);
+    vTaskDelay(1);
   }
 }
 

@@ -39,6 +39,7 @@ extern SettingStruct settings;
 extern InputStruct inputs;
 extern LoadCellStruct loadCell;
 extern HX711 scale;
+extern FunctionStruct functions;
 
 // HX711 circuit wiring
 float loadCellValue = 0;  // time counter (global variable)
@@ -111,7 +112,6 @@ void mFunc_welcomePage(uint8_t param);
 void mFunc_back(uint8_t param);
 void mFunc_goToRootMenu(uint8_t param);
 void mFunc_jumpTo_timer_info(uint8_t param);
-void mFunc_para(uint8_t param);
 void mFunc_unit(uint8_t param);
 void mFunc_ratio(uint8_t param);
 void mFunc_coefficent(uint8_t param);
@@ -119,10 +119,18 @@ void mFunc_hysteresis(uint8_t param);
 void mFunc_settings(uint8_t param);
 void mFunc_highSetpoint(uint8_t param);
 void mFunc_lowSetpoint(uint8_t param);
+
+void mFunc_dosingHighTime(uint8_t param);
+void mFunc_dosingLowTime(uint8_t param);
+void mFunc_dosingCycleCount(uint8_t param);
+void mFunc_dosingOutputNumber(uint8_t param);
+void mFunc_testFeed(uint8_t param);
+
 void mFunc_password(uint8_t param);
 void mFunc_resetFactory(uint8_t param);
 void mfunc_avgCount(uint8_t param);
 void mfunc_zeroFilter(uint8_t param);
+void mFunc_Functions(uint8_t param);
 void lcdml_menu_clear();
 void lcdml_menu_display();
 void mDyn_para(uint8_t line);
@@ -147,23 +155,31 @@ void lcdml_menu_control(void);
   LCDML_addAdvanced (4  , LCDML_0_2       , 3  , NULL, "Unit"            , mFunc_unit,           1, _LCDML_TYPE_default);                 
   LCDML_addAdvanced (5  , LCDML_0_2       , 4  , NULL, "Ratio"           , mFunc_ratio,          settings.ratio, _LCDML_TYPE_default);
   LCDML_addAdvanced (6  , LCDML_0_2       , 5  , NULL, "Coefficent"      , mFunc_coefficent,     settings.unit, _LCDML_TYPE_default);
-  LCDML_add         (7  , LCDML_0_2       , 6  , "Set points"            , NULL);                     
+  LCDML_add         (7  , LCDML_0_2       , 6  , "Functions"             , NULL);  
   LCDML_addAdvanced (8  , LCDML_0_2       , 7  , COND_hide,  "1"         , mFunc_settings,                      0,_LCDML_TYPE_default);
-  LCDML_addAdvanced (9  , LCDML_0_2_6     , 1  , NULL, "High point"      , mFunc_highSetpoint,   settings.setPointHigh, _LCDML_TYPE_default);                     
-  LCDML_addAdvanced (10 , LCDML_0_2_6     , 2  , NULL, "Low point"       , mFunc_lowSetpoint,    settings.setPointLow, _LCDML_TYPE_default);              
-  LCDML_addAdvanced (11 , LCDML_0_2_6     , 3  , NULL, "Hysteresis"      , mFunc_hysteresis,     settings.Hysteresis, _LCDML_TYPE_default);
-  LCDML_add         (12 , LCDML_0_2       , 8  , "Filteration"           , NULL);  
-  LCDML_addAdvanced (13 , LCDML_0_2_8     , 1  , NULL, "Avg count"       , mfunc_avgCount,     50, _LCDML_TYPE_default);
-  LCDML_addAdvanced (14 , LCDML_0_2_8     , 2  , NULL, "Zero filter"     , mfunc_zeroFilter,     50, _LCDML_TYPE_default);
-  LCDML_addAdvanced (15 , LCDML_0_2       , 9  , NULL, "Change password" , mFunc_password,       settings.password, _LCDML_TYPE_default);   
-  LCDML_addAdvanced (16 , LCDML_0_2       , 10 , NULL, "Reset Factory"   , mFunc_resetFactory,       settings.password, _LCDML_TYPE_default);  
+  LCDML_add         (9  , LCDML_0_2_6     , 1  , "Current function"      , mFunc_Functions);
+  LCDML_add         (10 , LCDML_0_2_6     , 2  , "Filling"               , NULL);                     
+  LCDML_addAdvanced (11 , LCDML_0_2_6_2   , 1  , NULL, "High point"      , mFunc_highSetpoint,   settings.setPointHigh, _LCDML_TYPE_default);                     
+  LCDML_addAdvanced (12 , LCDML_0_2_6_2   , 2  , NULL, "Low point"       , mFunc_lowSetpoint,    settings.setPointLow, _LCDML_TYPE_default);              
+  LCDML_addAdvanced (13 , LCDML_0_2_6_2   , 3  , NULL, "Hysteresis"      , mFunc_hysteresis,     settings.Hysteresis, _LCDML_TYPE_default);
+  LCDML_add         (14 , LCDML_0_2_6     , 3  , "Dosing"                , NULL);  
+  LCDML_addAdvanced (15 , LCDML_0_2_6_3   , 1  , NULL, "Test feed"       , mFunc_testFeed,   settings.setPointHigh, _LCDML_TYPE_default);  
+  LCDML_addAdvanced (16 , LCDML_0_2_6_3   , 2  , NULL, "High time"       , mFunc_dosingHighTime, settings.dosingFunction.highTime, _LCDML_TYPE_default);                     
+  LCDML_addAdvanced (17 , LCDML_0_2_6_3   , 3  , NULL, "Low time"        , mFunc_dosingLowTime,    settings.setPointLow, _LCDML_TYPE_default); 
+  LCDML_addAdvanced (18 , LCDML_0_2_6_3   , 4  , NULL, "Cycle count"     , mFunc_dosingCycleCount,     settings.Hysteresis, _LCDML_TYPE_default);
+  LCDML_addAdvanced (19 , LCDML_0_2_6_3   , 5  , NULL, "Output number pin" , mFunc_dosingOutputNumber,     settings.Hysteresis, _LCDML_TYPE_default);
+  LCDML_add         (20 , LCDML_0_2       , 8  , "Filteration"           , NULL);  
+  LCDML_addAdvanced (21 , LCDML_0_2_8     , 1  , NULL, "Avg count"       , mfunc_avgCount,     50, _LCDML_TYPE_default);
+  LCDML_addAdvanced (22 , LCDML_0_2_8     , 2  , NULL, "Zero filter"     , mfunc_zeroFilter,     50, _LCDML_TYPE_default);
+  LCDML_addAdvanced (23 , LCDML_0_2       , 9  , NULL, "Change password" , mFunc_password,       settings.password, _LCDML_TYPE_default);   
+  LCDML_addAdvanced (24 , LCDML_0_2       , 10 , NULL, "Reset Factory"   , mFunc_resetFactory,       settings.password, _LCDML_TYPE_default);  
 
 
-  LCDML_addAdvanced (17 , LCDML_0         , 3  , COND_hide,  "screensaver"        , mFunc_screensaver,        0,   _LCDML_TYPE_default);     
-  LCDML_addAdvanced (18 , LCDML_0         , 4  , COND_hide,  "welcomePage"        , mFunc_welcomePage,        0,   _LCDML_TYPE_default);
+  LCDML_addAdvanced (25 , LCDML_0         , 3  , COND_hide,  "screensaver"        , mFunc_screensaver,        0,   _LCDML_TYPE_default);     
+  LCDML_addAdvanced (26 , LCDML_0         , 4  , COND_hide,  "welcomePage"        , mFunc_welcomePage,        0,   _LCDML_TYPE_default);
 
 
-  #define _LCDML_DISP_cnt    18
+  #define _LCDML_DISP_cnt    26
   LCDML_createMenu(_LCDML_DISP_cnt);
 
 
@@ -486,6 +502,169 @@ void lcdml_menu_display()
     }
   } while ( u8g2.nextPage() );
 }
+
+
+
+const char* functionOptions[2]= { "Filling","Dosing" };
+int currentNumberFunction = 0;
+bool isEnterFunction;
+// *********************************************************************
+void mFunc_Functions(uint8_t param)
+// *********************************************************************
+{
+  isEnterFunction = false;
+  if(LCDML.FUNC_setup())          // ****** SETUP *********
+  {
+    LCDML_UNUSED(param);
+    currentNumberFunction = settings.currentFunction;
+    LCDML.FUNC_setLoopInterval(1);
+  }
+
+  if(LCDML.FUNC_loop())           // ****** LOOP *********
+  {
+      if(LCDML.BT_checkDown())
+      {
+        if (currentNumberFunction == 0) currentNumberFunction =1;
+        else currentNumberFunction = 0;
+      }
+      if (LCDML.BT_checkQuit())
+      {
+        LCDML.FUNC_goBackToMenu(3);
+      }
+      if(LCDML.BT_checkEnter())
+      {
+        isEnterFunction = true;
+      }
+      u8g2.firstPage();
+    do {
+        // u8g2.clear();
+        
+        u8g2.drawRFrame(0,0,128,64,7);
+        u8g2.drawRFrame(27,25,73,20,7);
+        u8g2.setFont(u8g_font_6x10r);
+        u8g2.drawStr(6,10,"Select function.");
+        
+        u8g2.setFont(u8g_font_8x13Br);
+
+        u8g2.drawStr(35,39,functionOptions[currentNumberFunction]);
+
+
+        if (isEnterFunction)
+        {
+          settings.currentFunction = currentNumberFunction;
+          memoryWriteSetting();
+          LCDML.FUNC_goBackToMenu();
+        }
+
+    } while( u8g2.nextPage() );
+  }
+
+
+  LCDML.FUNC_disableScreensaver();
+  if(LCDML.FUNC_close())      // ****** STABLE END *********
+  {
+    // you can here reset some global vars or do nothing
+  }
+}
+
+
+// *********************************************************************
+void mFunc_testFeed(uint8_t param)
+// *********************************************************************
+{
+  if(LCDML.FUNC_setup())          
+  {
+    LCDML_UNUSED(param);
+    int dosingOutputNumber,fullTimeoutputNumber;
+    if (settings.dosingFunction.outputNumber==0)
+    {
+      dosingOutputNumber = PB10;
+      fullTimeoutputNumber = PB2;
+    }
+    else if (settings.dosingFunction.outputNumber==1)
+    {
+      dosingOutputNumber = PB2;
+      fullTimeoutputNumber = PB10;
+    }
+    for (int i = 0; i < 3; i++)
+    {
+      functions.currentCounterNumber = i+1;
+      functions.dosingHigh = true;
+      digitalWrite(dosingOutputNumber,LOW);
+      delay(settings.dosingFunction.highTime);
+      functions.dosingHigh = false;
+      digitalWrite(dosingOutputNumber,HIGH);
+      delay(settings.dosingFunction.lowTime);
+    }
+    functions.functionActive = false;
+    digitalWrite(PB2,HIGH);
+    digitalWrite(PB10,HIGH);
+    LCDML.FUNC_goBackToMenu();
+  }
+}
+
+const char* dosingOutputOptions[2]= { "Output 1","Output 2" };
+int currentNumberdosingOutput = 0;
+bool isEnterdosingOutput;
+// *********************************************************************
+void mFunc_dosingOutputNumber(uint8_t param)
+// *********************************************************************
+{
+  isEnterdosingOutput = false;
+  if(LCDML.FUNC_setup())          // ****** SETUP *********
+  {
+    LCDML_UNUSED(param);
+    currentNumberdosingOutput = settings.dosingFunction.outputNumber;
+    LCDML.FUNC_setLoopInterval(1);
+  }
+
+  if(LCDML.FUNC_loop())           // ****** LOOP *********
+  {
+      if(LCDML.BT_checkDown())
+      {
+        if (currentNumberdosingOutput == 0) currentNumberdosingOutput =1;
+        else currentNumberdosingOutput = 0;
+      }
+      if (LCDML.BT_checkQuit())
+      {
+        LCDML.FUNC_goBackToMenu(3);
+      }
+      if(LCDML.BT_checkEnter())
+      {
+        isEnterdosingOutput = true;
+      }
+      u8g2.firstPage();
+    do {
+        // u8g2.clear();
+        
+        u8g2.drawRFrame(0,0,128,64,7);
+        u8g2.drawRFrame(27,25,80,20,7);
+        u8g2.setFont(u8g_font_6x10r);
+        u8g2.drawStr(6,10,"Select output.");
+        
+        u8g2.setFont(u8g_font_8x13Br);
+
+        u8g2.drawStr(35,39,dosingOutputOptions[currentNumberdosingOutput]);
+
+
+        if (isEnterdosingOutput)
+        {
+          settings.dosingFunction.outputNumber = currentNumberdosingOutput;
+          memoryWriteSetting();
+          LCDML.FUNC_goBackToMenu();
+        }
+
+    } while( u8g2.nextPage() );
+  }
+
+
+  LCDML.FUNC_disableScreensaver();
+  if(LCDML.FUNC_close())      // ****** STABLE END *********
+  {
+    // you can here reset some global vars or do nothing
+  }
+}
+
 
 
 
@@ -997,6 +1176,394 @@ void mFunc_password(uint8_t param)
           break;
         case 3:
           u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumberpassword-1)),(25),rectSize,rectSize,borderRadius);
+          break;
+        }
+    } while( u8g2.nextPage() );
+  }
+
+  LCDML.FUNC_disableScreensaver();
+  if(LCDML.FUNC_close())      // ****** STABLE END *********
+  {
+    // you can here reset some global vars or do nothing
+  }
+}
+
+int16_t numberdosingCycleCount1 = 0;
+int16_t numberdosingCycleCount2 = 0;
+int16_t numberdosingCycleCount3 = 0;
+int8_t currentdosingCycleCount = 1;
+
+// *********************************************************************
+void mFunc_dosingCycleCount(uint8_t param)
+// *********************************************************************
+{
+  char bufNumber1[1];
+  char bufNumber2[1];
+  char bufNumber3[1];
+
+  int8_t xFont = 45;
+  int8_t xAddation = 15;
+  int8_t yFont = 37;
+  int8_t rectSize = 15;
+  int8_t borderRadius = 6;
+
+  bool isEnter = false;
+  if(LCDML.FUNC_setup())          // ****** SETUP *********
+  {
+    double originalNumber = settings.dosingFunction.cycleCount;
+    int integerPart = static_cast<int>(originalNumber);
+    numberdosingCycleCount1 = integerPart / 100;
+    numberdosingCycleCount2 = (integerPart / 10) % 10;
+    numberdosingCycleCount3 = (integerPart / 1) % 10;
+    LCDML_UNUSED(param);
+  }
+
+
+
+  if(LCDML.FUNC_loop())           // ****** LOOP *********
+  {
+      if(LCDML.BT_checkUp())
+      {
+        if (currentdosingCycleCount==3) currentdosingCycleCount=1;
+        else currentdosingCycleCount++; 
+      }
+      if(LCDML.BT_checkDown())
+      {
+        switch (currentdosingCycleCount)
+          {
+          case 1:
+            if (numberdosingCycleCount1 == 0) numberdosingCycleCount1 = 9;
+            else numberdosingCycleCount1--;
+            break;
+          case 2:
+            if (numberdosingCycleCount2 == 0) numberdosingCycleCount2 = 9;
+            else numberdosingCycleCount2--;
+            break;
+          case 3:
+            if (numberdosingCycleCount3 == 0) numberdosingCycleCount3 = 9;
+            else numberdosingCycleCount3--;
+            break;
+          }
+      }
+      if (LCDML.BT_checkQuit()) LCDML.FUNC_goBackToMenu(1);
+      if(LCDML.BT_checkEnter())
+      {
+
+        isEnter = true;
+      }
+    do {
+        u8g2.clear();
+        
+        u8g2.drawRFrame(0,0,128,64,borderRadius);
+        u8g2.setFont(u8g_font_6x10r);
+        u8g2.drawStr(6,10,"Enter cycle count.");
+        
+        u8g2.setFont(u8g_font_9x18Br);
+        sprintf (bufNumber1, "%d", numberdosingCycleCount1);
+        u8g2.drawStr(xFont,yFont,bufNumber1);
+        sprintf (bufNumber2, "%d", numberdosingCycleCount2);
+        u8g2.drawStr(xFont +xAddation,yFont,bufNumber2);
+        sprintf (bufNumber3, "%d", numberdosingCycleCount3);
+        u8g2.drawStr(xFont +(xAddation*2),yFont,bufNumber3);
+
+        if (isEnter)
+        {
+          int result = 
+            (numberdosingCycleCount1 * 100) + 
+            (numberdosingCycleCount2 * 10) + 
+            (numberdosingCycleCount3 * 1);
+
+          settings.dosingFunction.cycleCount = result;
+          memoryWriteSetting();
+        }
+        switch (currentdosingCycleCount)
+        {
+        case 1:
+          u8g2.drawRFrame((xFont-3) +(xAddation*(currentdosingCycleCount-1)),(25),rectSize,rectSize,borderRadius);
+          break;
+        case 2:
+          u8g2.drawRFrame((xFont-3) +(xAddation*(currentdosingCycleCount-1)),(25),rectSize,rectSize,borderRadius);
+          break;
+        case 3:
+          u8g2.drawRFrame((xFont-3) +(xAddation*(currentdosingCycleCount-1)),(25),rectSize,rectSize,borderRadius);
+          break;
+        }
+    } while( u8g2.nextPage() );
+  }
+
+  LCDML.FUNC_disableScreensaver();
+  if(LCDML.FUNC_close())      // ****** STABLE END *********
+  {
+    // you can here reset some global vars or do nothing
+  }
+}
+
+
+int16_t numberdosingHighTime1 = 0;
+int16_t numberdosingHighTime2 = 0;
+int16_t numberdosingHighTime3 = 0;
+int16_t numberdosingHighTime4 = 0;
+int16_t numberdosingHighTime5 = 0;
+int8_t currentNumberDosingHighTime = 1;
+
+// *********************************************************************
+void mFunc_dosingHighTime(uint8_t param)
+// *********************************************************************
+{
+  char bufNumber1[1];
+  char bufNumber2[1];
+  char bufNumber3[1];
+  char bufNumber4[1];
+  char bufNumber5[1];
+
+  int8_t xFont = 25;
+  int8_t xAddation = 15;
+  int8_t yFont = 37;
+  int8_t rectSize = 15;
+  int8_t borderRadius = 6;
+
+  bool isEnter = false;
+  if(LCDML.FUNC_setup())          // ****** SETUP *********
+  {
+    double originalNumber = settings.dosingFunction.highTime;
+    int integerPart = static_cast<int>(originalNumber);
+    numberdosingHighTime1 = integerPart / 10000;
+    numberdosingHighTime2 = (integerPart / 1000) % 10;
+    numberdosingHighTime3 = (integerPart / 100) % 10;
+    numberdosingHighTime4 = (integerPart / 10) % 10;
+    numberdosingHighTime5 = (integerPart / 1) % 10;
+    LCDML_UNUSED(param);
+  }
+
+
+
+  if(LCDML.FUNC_loop())           // ****** LOOP *********
+  {
+      if(LCDML.BT_checkUp())
+      {
+        if (currentNumberDosingHighTime==5) currentNumberDosingHighTime=1;
+        else currentNumberDosingHighTime++; 
+      }
+      if(LCDML.BT_checkDown())
+      {
+        switch (currentNumberDosingHighTime)
+          {
+          case 1:
+            if (numberdosingHighTime1 == 0) numberdosingHighTime1 = 9;
+            else numberdosingHighTime1--;
+            break;
+          case 2:
+            if (numberdosingHighTime2 == 0) numberdosingHighTime2 = 9;
+            else numberdosingHighTime2--;
+            break;
+          case 3:
+            if (numberdosingHighTime3 == 0) numberdosingHighTime3 = 9;
+            else numberdosingHighTime3--;
+            break;
+          case 4:
+            if (numberdosingHighTime4 == 0) numberdosingHighTime4 = 9;
+            else numberdosingHighTime4--;
+            break;
+          case 5:
+            if (numberdosingHighTime5 == 0) numberdosingHighTime5 = 9;
+            else numberdosingHighTime5--;
+            break;
+          }
+      }
+      if (LCDML.BT_checkQuit()) LCDML.FUNC_goBackToMenu(1);
+      if(LCDML.BT_checkEnter())
+      {
+
+        isEnter = true;
+      }
+    do {
+        u8g2.clear();
+        
+        u8g2.drawRFrame(0,0,128,64,borderRadius);
+        u8g2.setFont(u8g_font_6x10r);
+        u8g2.drawStr(6,10,"Enter high time(ms).");
+        
+        u8g2.setFont(u8g_font_9x18Br);
+        sprintf (bufNumber1, "%d", numberdosingHighTime1);
+        u8g2.drawStr(xFont,yFont,bufNumber1);
+        sprintf (bufNumber2, "%d", numberdosingHighTime2);
+        u8g2.drawStr(xFont +xAddation,yFont,bufNumber2);
+        sprintf (bufNumber3, "%d", numberdosingHighTime3);
+        u8g2.drawStr(xFont +(xAddation*2),yFont,bufNumber3);
+        sprintf (bufNumber4, "%d", numberdosingHighTime4);
+        u8g2.drawStr(xFont +(xAddation*3),yFont,bufNumber4);
+        sprintf (bufNumber5, "%d", numberdosingHighTime5);
+        u8g2.drawStr(xFont +(xAddation*4),yFont,bufNumber5);
+
+        if (isEnter)
+        {
+          int result = 
+            (numberdosingHighTime1 * 10000) + 
+            (numberdosingHighTime2 * 1000) + 
+            (numberdosingHighTime3 * 100) + 
+            (numberdosingHighTime4 * 10) + 
+            (numberdosingHighTime5 * 1);
+
+          settings.dosingFunction.highTime = result;
+          memoryWriteSetting();
+          LCDML.FUNC_goBackToMenu();
+        }
+        switch (currentNumberDosingHighTime)
+        {
+        case 1:
+          u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumberDosingHighTime-1)),(25),rectSize,rectSize,borderRadius);
+          break;
+        case 2:
+          u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumberDosingHighTime-1)),(25),rectSize,rectSize,borderRadius);
+          break;
+        case 3:
+          u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumberDosingHighTime-1)),(25),rectSize,rectSize,borderRadius);
+          break;
+        case 4:
+          u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumberDosingHighTime-1)),(25),rectSize,rectSize,borderRadius);
+          break;
+        case 5:
+          u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumberDosingHighTime-1)),(25),rectSize,rectSize,borderRadius);
+          break;
+        }
+    } while( u8g2.nextPage() );
+  }
+
+  LCDML.FUNC_disableScreensaver();
+  if(LCDML.FUNC_close())      // ****** STABLE END *********
+  {
+    // you can here reset some global vars or do nothing
+  }
+}
+
+
+
+
+int16_t numberdosingLowTime1 = 0;
+int16_t numberdosingLowTime2 = 0;
+int16_t numberdosingLowTime3 = 0;
+int16_t numberdosingLowTime4 = 0;
+int16_t numberdosingLowTime5 = 0;
+int8_t currentNumberDosingLowTime = 1;
+
+// *********************************************************************
+void mFunc_dosingLowTime(uint8_t param)
+// *********************************************************************
+{
+  char bufNumber1[1];
+  char bufNumber2[1];
+  char bufNumber3[1];
+  char bufNumber4[1];
+  char bufNumber5[1];
+
+  int8_t xFont = 25;
+  int8_t xAddation = 15;
+  int8_t yFont = 37;
+  int8_t rectSize = 15;
+  int8_t borderRadius = 6;
+
+  bool isEnter = false;
+  if(LCDML.FUNC_setup())          // ****** SETUP *********
+  {
+    double originalNumber = settings.dosingFunction.lowTime;
+    int integerPart = static_cast<int>(originalNumber);
+    numberdosingLowTime1 = integerPart / 10000;
+    numberdosingLowTime2 = (integerPart / 1000) % 10;
+    numberdosingLowTime3 = (integerPart / 100) % 10;
+    numberdosingLowTime4 = (integerPart / 10) % 10;
+    numberdosingLowTime5 = (integerPart / 1) % 10;
+    LCDML_UNUSED(param);
+  }
+
+
+
+  if(LCDML.FUNC_loop())           // ****** LOOP *********
+  {
+      if(LCDML.BT_checkUp())
+      {
+        if (currentNumberDosingLowTime==5) currentNumberDosingLowTime=1;
+        else currentNumberDosingLowTime++; 
+      }
+      if(LCDML.BT_checkDown())
+      {
+        switch (currentNumberDosingLowTime)
+          {
+          case 1:
+            if (numberdosingLowTime1 == 0) numberdosingLowTime1 = 9;
+            else numberdosingLowTime1--;
+            break;
+          case 2:
+            if (numberdosingLowTime2 == 0) numberdosingLowTime2 = 9;
+            else numberdosingLowTime2--;
+            break;
+          case 3:
+            if (numberdosingLowTime3 == 0) numberdosingLowTime3 = 9;
+            else numberdosingLowTime3--;
+            break;
+          case 4:
+            if (numberdosingLowTime4 == 0) numberdosingLowTime4 = 9;
+            else numberdosingLowTime4--;
+            break;
+          case 5:
+            if (numberdosingLowTime5 == 0) numberdosingLowTime5 = 9;
+            else numberdosingLowTime5--;
+            break;
+          }
+      }
+      if (LCDML.BT_checkQuit()) LCDML.FUNC_goBackToMenu(1);
+      if(LCDML.BT_checkEnter())
+      {
+
+        isEnter = true;
+      }
+    do {
+        u8g2.clear();
+        
+        u8g2.drawRFrame(0,0,128,64,borderRadius);
+        u8g2.setFont(u8g_font_6x10r);
+        u8g2.drawStr(6,10,"Enter low time(ms).");
+        
+        u8g2.setFont(u8g_font_9x18Br);
+        sprintf (bufNumber1, "%d", numberdosingLowTime1);
+        u8g2.drawStr(xFont,yFont,bufNumber1);
+        sprintf (bufNumber2, "%d", numberdosingLowTime2);
+        u8g2.drawStr(xFont +xAddation,yFont,bufNumber2);
+        sprintf (bufNumber3, "%d", numberdosingLowTime3);
+        u8g2.drawStr(xFont +(xAddation*2),yFont,bufNumber3);
+        sprintf (bufNumber4, "%d", numberdosingLowTime4);
+        u8g2.drawStr(xFont +(xAddation*3),yFont,bufNumber4);
+        sprintf (bufNumber5, "%d", numberdosingLowTime5);
+        u8g2.drawStr(xFont +(xAddation*4),yFont,bufNumber5);
+
+        if (isEnter)
+        {
+          int result = 
+            (numberdosingLowTime1 * 10000) + 
+            (numberdosingLowTime2 * 1000) + 
+            (numberdosingLowTime3 * 100) + 
+            (numberdosingLowTime4 * 10) + 
+            (numberdosingLowTime5 * 1);
+
+          settings.dosingFunction.lowTime = result;
+          memoryWriteSetting();
+          LCDML.FUNC_goBackToMenu();
+        }
+        switch (currentNumberDosingLowTime)
+        {
+        case 1:
+          u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumberDosingLowTime-1)),(25),rectSize,rectSize,borderRadius);
+          break;
+        case 2:
+          u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumberDosingLowTime-1)),(25),rectSize,rectSize,borderRadius);
+          break;
+        case 3:
+          u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumberDosingLowTime-1)),(25),rectSize,rectSize,borderRadius);
+          break;
+        case 4:
+          u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumberDosingLowTime-1)),(25),rectSize,rectSize,borderRadius);
+          break;
+        case 5:
+          u8g2.drawRFrame((xFont-3) +(xAddation*(currentNumberDosingLowTime-1)),(25),rectSize,rectSize,borderRadius);
           break;
         }
     } while( u8g2.nextPage() );
@@ -2249,8 +2816,8 @@ void mFunc_screensaver(uint8_t param)
     }
     if (LCDML.BT_checkDown()) 
     {
-      if (loadCell.setPointActive) loadCell.setPointActive = false;
-      else loadCell.setPointActive = true; 
+      if (functions.functionActive) functions.functionActive = false;
+      else functions.functionActive = true; 
     }
     
 
@@ -2277,16 +2844,31 @@ void mFunc_screensaver(uint8_t param)
         u8g2.setFont(u8g2_font_6x10_mr);
         u8g2.drawStr(86,60, String("["+String(units[settings.unit])+"]").c_str());
         
-        char screenRatio[10];
-        dtostrf(ratioList[settings.ratio],4,3,screenRatio);
-        u8g2.drawStr(4,60, String("[X"+String(screenRatio)+"]").c_str());
+        if (settings.currentFunction==1 && functions.functionActive)
+        {
+          char currentCounterNumber[10];
+          sprintf (currentCounterNumber, "D -> %d", functions.currentCounterNumber);
+          u8g2.drawStr(4,60, currentCounterNumber);
+        }
+        else
+        {
+          char screenRatio[10];
+          dtostrf(ratioList[settings.ratio],4,3,screenRatio);
+          u8g2.drawStr(4,60, String("[X"+String(screenRatio)+"]").c_str());
+        }
+        
+
 
 
 
         
         u8g2.drawLine(7,16,7,48);
         u8g2.setFont(u8g2_font_6x12_mr);
-        if(loadCell.setPointActive) u8g2.drawStr(1,23,String("s").c_str());
+        if(functions.functionActive) 
+        {
+          if (settings.currentFunction==0) u8g2.drawStr(1,26,String("F").c_str());
+          else u8g2.drawStr(1,26,String("D").c_str());
+        }
         else u8g2.drawStr(1,23,String("").c_str());
 
 
@@ -2299,12 +2881,43 @@ void mFunc_screensaver(uint8_t param)
         if (inputs.input2 == 0) { u8g2.drawDisc(50,8,4);}
         else { u8g2.drawCircle(50,8,4);}
 
-        u8g2.drawStr(74,11,"O1:");
-        u8g2.drawStr(104,11,"O2:");
-        if (loadCell.highSetPoint) u8g2.drawBox(119,4,8,8);
-        else u8g2.drawFrame(119,4,8,8);
-        if (loadCell.lowSetPoint) u8g2.drawBox(89,4,8,8);
-        else u8g2.drawFrame(89,4,8,8);
+        switch (settings.currentFunction)
+        {
+          case 0:
+          {
+            u8g2.drawStr(74,11,"O1:");
+            u8g2.drawStr(104,11,"O2:");
+            if (functions.highSetPoint) u8g2.drawBox(119,4,8,8);
+            else u8g2.drawFrame(119,4,8,8);
+            if (functions.lowSetPoint ) u8g2.drawBox(89,4,8,8);
+            else u8g2.drawFrame(89,4,8,8);
+            break;
+          }
+          case 1:
+          {
+            u8g2.drawStr(74,11,"O1:");
+            u8g2.drawStr(104,11,"O2:");
+            if (settings.dosingFunction.outputNumber==1)
+            {
+              if (functions.dosingHigh) u8g2.drawBox(119,4,8,8);
+              else u8g2.drawFrame(119,4,8,8);
+              if (functions.functionActive) u8g2.drawBox(89,4,8,8);
+              else u8g2.drawFrame(89,4,8,8);
+            }
+            else if(settings.dosingFunction.outputNumber==0)
+            {
+              if (functions.dosingHigh) u8g2.drawBox(89,4,8,8);
+              else u8g2.drawFrame(89,4,8,8);
+              if (functions.functionActive) u8g2.drawBox(119,4,8,8);
+              else u8g2.drawFrame(119,4,8,8);
+            }
+            break;
+          }
+          default:
+            break;
+        }
+        
+        
         
 
 
@@ -2364,63 +2977,5 @@ void mFunc_jumpTo_timer_info(uint8_t param)
     
     // Jump to main screen
     LCDML.OTHER_jumpToFunc(mFunc_timer_info);
-  }
-}
-
-
-// *********************************************************************
-void mFunc_para(uint8_t param)
-// *********************************************************************
-{
-  if(LCDML.FUNC_setup())          // ****** SETUP *********
-  {
-
-    char buf[20];
-    sprintf (buf, "parameter: %d", 5);
-
-    // setup function
-    u8g2.setFont(_LCDML_DISP_font);
-    u8g2.firstPage();
-    do {
-      u8g2.drawStr( 0, (_LCDML_DISP_font_h * 1), buf);
-      u8g2.drawStr( 0, (_LCDML_DISP_font_h * 2), "press any key");
-      u8g2.drawStr( 0, (_LCDML_DISP_font_h * 3), "to leave it");
-    } while( u8g2.nextPage() );
-
-    LCDML.FUNC_setLoopInterval(100);  // starts a trigger event for the loop function every 100 milliseconds
-  }
-
-  if(LCDML.FUNC_loop())               // ****** LOOP *********
-  {
-    // For example
-    switch(param)
-    {
-      case 10:
-        // do something
-        break;
-
-      case 20:
-        // do something
-        break;
-
-      case 30:
-        // do something
-        break;
-
-      default:
-        // do nothing
-        break;
-    }
-
-
-    if (LCDML.BT_checkAny()) // check if any button is pressed (enter, up, down, left, right)
-    {
-      LCDML.FUNC_goBackToMenu();  // leave this function
-    }
-  }
-
-  if(LCDML.FUNC_close())      // ****** STABLE END *********
-  {
-    // you can here reset some global vars or do nothing
   }
 }
