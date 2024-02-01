@@ -25,6 +25,7 @@ void loadDefaultSetting(void) {
   settings.dosingFunction.highTime = 130;
   settings.dosingFunction.lowTime = 100;
   settings.dosingFunction.outputNumber = 1;
+  settings.dosingFunction.lastTime = 25;
 }
 
 uint32_t internalFlashRead32bit(uint32_t address) {

@@ -15,6 +15,7 @@ typedef struct {
   int cycleCount;
   int highTime;
   int lowTime;
+  int lastTime;
 } DosingStruct;
 
 typedef struct {
@@ -53,6 +54,8 @@ typedef struct {
   bool lowSetPoint;
   int currentCounterNumber;
   bool dosingHigh;
+  bool keepAlive;
+  int keepAliveCounter;
 } FunctionStruct;
 
 

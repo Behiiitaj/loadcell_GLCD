@@ -179,7 +179,26 @@ static void loadcellAnalysis(void* arg) {
               vTaskDelay(pdMS_TO_TICKS(settings.dosingFunction.lowTime));
             }
           }
+
+          functions.keepAliveCounter = settings.dosingFunction.lastTime;
+          functions.keepAlive =true;
+          int waitTime = 0;
+          int keepAlive = settings.dosingFunction.lastTime*1000;
+          int counterForOneSec = 0;
+
+          while (functions.functionActive && ((waitTime*100) < keepAlive))
+          {
+            if (counterForOneSec == 10)
+            {
+              counterForOneSec = 0;
+              functions.keepAliveCounter--;
+            } 
+            vTaskDelay(pdMS_TO_TICKS(100));
+            waitTime++;
+            counterForOneSec++;
+          }
           functions.functionActive = false;
+          functions.keepAlive = false;
           digitalWrite(PB2,HIGH);
           digitalWrite(PB10,HIGH);
         }

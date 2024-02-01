@@ -119,6 +119,7 @@ void mFunc_hysteresis(uint8_t param);
 void mFunc_settings(uint8_t param);
 void mFunc_highSetpoint(uint8_t param);
 void mFunc_lowSetpoint(uint8_t param);
+void mfunc_lastTime(uint8_t param);
 
 void mFunc_dosingHighTime(uint8_t param);
 void mFunc_dosingLowTime(uint8_t param);
@@ -167,19 +168,20 @@ void lcdml_menu_control(void);
   LCDML_addAdvanced (16 , LCDML_0_2_6_3   , 2  , NULL, "High time"       , mFunc_dosingHighTime, settings.dosingFunction.highTime, _LCDML_TYPE_default);                     
   LCDML_addAdvanced (17 , LCDML_0_2_6_3   , 3  , NULL, "Low time"        , mFunc_dosingLowTime,    settings.setPointLow, _LCDML_TYPE_default); 
   LCDML_addAdvanced (18 , LCDML_0_2_6_3   , 4  , NULL, "Cycle count"     , mFunc_dosingCycleCount,     settings.Hysteresis, _LCDML_TYPE_default);
-  LCDML_addAdvanced (19 , LCDML_0_2_6_3   , 5  , NULL, "Output number pin" , mFunc_dosingOutputNumber,     settings.Hysteresis, _LCDML_TYPE_default);
-  LCDML_add         (20 , LCDML_0_2       , 8  , "Filteration"           , NULL);  
-  LCDML_addAdvanced (21 , LCDML_0_2_8     , 1  , NULL, "Avg count"       , mfunc_avgCount,     50, _LCDML_TYPE_default);
-  LCDML_addAdvanced (22 , LCDML_0_2_8     , 2  , NULL, "Zero filter"     , mfunc_zeroFilter,     50, _LCDML_TYPE_default);
-  LCDML_addAdvanced (23 , LCDML_0_2       , 9  , NULL, "Change password" , mFunc_password,       settings.password, _LCDML_TYPE_default);   
-  LCDML_addAdvanced (24 , LCDML_0_2       , 10 , NULL, "Reset Factory"   , mFunc_resetFactory,       settings.password, _LCDML_TYPE_default);  
+  LCDML_addAdvanced (19 , LCDML_0_2_6_3   , 5  , NULL, "Last time"       , mfunc_lastTime,     settings.dosingFunction.lastTime, _LCDML_TYPE_default);
+  LCDML_addAdvanced (20 , LCDML_0_2_6_3   , 6  , NULL, "Output number pin" , mFunc_dosingOutputNumber,     settings.Hysteresis, _LCDML_TYPE_default);
+  LCDML_add         (21 , LCDML_0_2       , 8  , "Filteration"           , NULL);  
+  LCDML_addAdvanced (22 , LCDML_0_2_8     , 1  , NULL, "Avg count"       , mfunc_avgCount,     50, _LCDML_TYPE_default);
+  LCDML_addAdvanced (23 , LCDML_0_2_8     , 2  , NULL, "Zero filter"     , mfunc_zeroFilter,     50, _LCDML_TYPE_default);
+  LCDML_addAdvanced (24 , LCDML_0_2       , 9  , NULL, "Change password" , mFunc_password,       settings.password, _LCDML_TYPE_default);   
+  LCDML_addAdvanced (25 , LCDML_0_2       , 10 , NULL, "Reset Factory"   , mFunc_resetFactory,       settings.password, _LCDML_TYPE_default);  
 
 
-  LCDML_addAdvanced (25 , LCDML_0         , 3  , COND_hide,  "screensaver"        , mFunc_screensaver,        0,   _LCDML_TYPE_default);     
-  LCDML_addAdvanced (26 , LCDML_0         , 4  , COND_hide,  "welcomePage"        , mFunc_welcomePage,        0,   _LCDML_TYPE_default);
+  LCDML_addAdvanced (26 , LCDML_0         , 3  , COND_hide,  "screensaver"        , mFunc_screensaver,        0,   _LCDML_TYPE_default);     
+  LCDML_addAdvanced (27 , LCDML_0         , 4  , COND_hide,  "welcomePage"        , mFunc_welcomePage,        0,   _LCDML_TYPE_default);
 
 
-  #define _LCDML_DISP_cnt    26
+  #define _LCDML_DISP_cnt    27
   LCDML_createMenu(_LCDML_DISP_cnt);
 
 
@@ -635,7 +637,6 @@ void mFunc_dosingOutputNumber(uint8_t param)
       }
       u8g2.firstPage();
     do {
-        // u8g2.clear();
         
         u8g2.drawRFrame(0,0,128,64,7);
         u8g2.drawRFrame(27,25,80,20,7);
@@ -806,6 +807,66 @@ void mFunc_unit(uint8_t param)
         {
           memoryWriteSetting();
           LCDML.OTHER_jumpToFunc(mFunc_settings);
+        }
+
+    } while( u8g2.nextPage() );
+  }
+
+
+  LCDML.FUNC_disableScreensaver();
+  if(LCDML.FUNC_close())      // ****** STABLE END *********
+  {
+    // you can here reset some global vars or do nothing
+  }
+}
+
+
+int currentNumberlastTime = 1;
+bool isEnterlastTime = false;
+// *********************************************************************
+void mfunc_lastTime(uint8_t param)
+// *********************************************************************
+{
+  isEnterlastTime = false;
+  if(LCDML.FUNC_setup())          // ****** SETUP *********
+  {
+    currentNumberlastTime = settings.dosingFunction.lastTime;
+    LCDML_UNUSED(param);
+  }
+
+  if(LCDML.FUNC_loop())           // ****** LOOP *********
+  {
+      if(LCDML.BT_checkDown())
+      {
+        currentNumberlastTime--;
+        if (currentNumberlastTime == 0) currentNumberlastTime = 30;
+      }
+      if (LCDML.BT_checkQuit())
+      {
+        LCDML.FUNC_goBackToMenu(3);
+      }
+      if(LCDML.BT_checkEnter())
+      {
+        isEnterlastTime = true;
+      }
+    do {
+        u8g2.clear();
+        
+        u8g2.drawRFrame(0,0,128,64,7);
+        u8g2.drawRFrame(37,30,50,20,7);
+        u8g2.setFont(u8g_font_6x10r);
+        u8g2.drawStr(6,10,"Enter alive time of");
+        u8g2.drawStr(6,20,"output as seconds.");
+        
+        u8g2.setFont(u8g_font_9x18Br);
+
+        u8g2.drawStr(45,44, String(currentNumberlastTime).c_str());
+
+        if (isEnterlastTime)
+        {
+          settings.dosingFunction.lastTime = currentNumberlastTime;
+          memoryWriteSetting();
+          LCDML.FUNC_goBackToMenu();
         }
 
     } while( u8g2.nextPage() );
@@ -2653,7 +2714,7 @@ void mFunc_welcomePage(uint8_t param)
       u8g2.drawStr(75,31,"WEIGHT");
       u8g2.drawStr(65,43,"INDICATOR");
       u8g2.setFont(u8g_font_5x8);
-      u8g2.drawStr(82,60,"V0.5");
+      u8g2.drawStr(82,60,"V0.6");
     } while( u8g2.nextPage() );
 
   }
@@ -2847,8 +2908,17 @@ void mFunc_screensaver(uint8_t param)
         if (settings.currentFunction==1 && functions.functionActive)
         {
           char currentCounterNumber[10];
-          sprintf (currentCounterNumber, "D -> %d", functions.currentCounterNumber);
-          u8g2.drawStr(4,60, currentCounterNumber);
+          if (functions.keepAlive)
+          {
+            sprintf (currentCounterNumber, "Time : %d", functions.keepAliveCounter);
+            u8g2.drawStr(4,60, currentCounterNumber);
+          }
+          else
+          {
+            sprintf (currentCounterNumber, "D -> %d", functions.currentCounterNumber);
+            u8g2.drawStr(4,60, currentCounterNumber);
+          }
+          
         }
         else
         {
