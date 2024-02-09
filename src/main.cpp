@@ -65,7 +65,8 @@ static void readLoadCell(void* arg) {
   delay(200);
   scale.set_scale(settings.scaleVal);  
   scale.power_up();
-  scale.tare();
+  if (settings.startupTare) scale.tare();
+  else scale.set_offset(settings.deadTare);
   scale.power_down();
   while (1)
   {
@@ -77,6 +78,7 @@ static void readLoadCell(void* arg) {
   }
 }
 
+int dosingPumpBeep = 10;
 
 static void loadcellAnalysis(void* arg) {
   UNUSED(arg);
@@ -166,6 +168,7 @@ static void loadcellAnalysis(void* arg) {
             fullTimeoutputNumber = PB10;
           }
           digitalWrite(fullTimeoutputNumber,LOW);
+          if (settings.dosingFunction.lowTime < dosingPumpBeep) dosingPumpBeep = settings.dosingFunction.lowTime;
           for (int i = 0; i < settings.dosingFunction.cycleCount; i++)
           {
             if (functions.functionActive)
@@ -176,7 +179,10 @@ static void loadcellAnalysis(void* arg) {
               vTaskDelay(pdMS_TO_TICKS(settings.dosingFunction.highTime));
               functions.dosingHigh = false;
               digitalWrite(dosingOutputNumber,HIGH);
-              vTaskDelay(pdMS_TO_TICKS(settings.dosingFunction.lowTime));
+              digitalWrite(PB7,HIGH);
+              vTaskDelay(dosingPumpBeep);
+              digitalWrite(PB7,LOW);
+              vTaskDelay(pdMS_TO_TICKS(settings.dosingFunction.lowTime - dosingPumpBeep));
             }
           }
 
@@ -201,6 +207,19 @@ static void loadcellAnalysis(void* arg) {
           functions.keepAlive = false;
           digitalWrite(PB2,HIGH);
           digitalWrite(PB10,HIGH);
+
+          digitalWrite(PB7,HIGH);
+          vTaskDelay(500);
+          digitalWrite(PB7,LOW);
+          vTaskDelay(400);
+          digitalWrite(PB7,HIGH);
+          vTaskDelay(500);
+          digitalWrite(PB7,LOW);
+          vTaskDelay(400);
+          digitalWrite(PB7,HIGH);
+          vTaskDelay(1200);
+          digitalWrite(PB7,LOW);
+
         }
     }
     vTaskDelay(1);

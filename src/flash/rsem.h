@@ -33,6 +33,8 @@ typedef struct {
   int zeroFilter;
   int avgCount;
   int currentFunction;
+  bool startupTare;
+  long deadTare;
   DosingStruct dosingFunction;
 } SettingStruct;
 

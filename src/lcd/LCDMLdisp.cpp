@@ -126,6 +126,8 @@ void mFunc_dosingLowTime(uint8_t param);
 void mFunc_dosingCycleCount(uint8_t param);
 void mFunc_dosingOutputNumber(uint8_t param);
 void mFunc_testFeed(uint8_t param);
+void mFunc_startupTare(uint8_t param);
+void mFunc_deadTare(uint8_t param);
 
 void mFunc_password(uint8_t param);
 void mFunc_resetFactory(uint8_t param);
@@ -173,15 +175,17 @@ void lcdml_menu_control(void);
   LCDML_add         (21 , LCDML_0_2       , 8  , "Filteration"           , NULL);  
   LCDML_addAdvanced (22 , LCDML_0_2_8     , 1  , NULL, "Avg count"       , mfunc_avgCount,     50, _LCDML_TYPE_default);
   LCDML_addAdvanced (23 , LCDML_0_2_8     , 2  , NULL, "Zero filter"     , mfunc_zeroFilter,     50, _LCDML_TYPE_default);
-  LCDML_addAdvanced (24 , LCDML_0_2       , 9  , NULL, "Change password" , mFunc_password,       settings.password, _LCDML_TYPE_default);   
-  LCDML_addAdvanced (25 , LCDML_0_2       , 10 , NULL, "Reset Factory"   , mFunc_resetFactory,       settings.password, _LCDML_TYPE_default);  
+  LCDML_addAdvanced (24 , LCDML_0_2       , 9  , NULL, "Change password" , mFunc_password,       settings.password, _LCDML_TYPE_default);  
+  LCDML_addAdvanced (25 , LCDML_0_2       , 10 , NULL, "Dead offset"     , mFunc_deadTare,   settings.startupTare, _LCDML_TYPE_default);
+  LCDML_addAdvanced (26 , LCDML_0_2       , 11 , NULL, "Startup tare"    , mFunc_startupTare,      settings.deadTare, _LCDML_TYPE_default);
+  LCDML_addAdvanced (27 , LCDML_0_2       , 12 , NULL, "Reset factory"   , mFunc_resetFactory,   settings.password, _LCDML_TYPE_default);  
 
 
-  LCDML_addAdvanced (26 , LCDML_0         , 3  , COND_hide,  "screensaver"        , mFunc_screensaver,        0,   _LCDML_TYPE_default);     
-  LCDML_addAdvanced (27 , LCDML_0         , 4  , COND_hide,  "welcomePage"        , mFunc_welcomePage,        0,   _LCDML_TYPE_default);
+  LCDML_addAdvanced (28 , LCDML_0         , 3  , COND_hide,  "screensaver"        , mFunc_screensaver,        0,   _LCDML_TYPE_default);     
+  LCDML_addAdvanced (29 , LCDML_0         , 4  , COND_hide,  "welcomePage"        , mFunc_welcomePage,        0,   _LCDML_TYPE_default);
 
 
-  #define _LCDML_DISP_cnt    27
+  #define _LCDML_DISP_cnt    29
   LCDML_createMenu(_LCDML_DISP_cnt);
 
 
@@ -1001,6 +1005,134 @@ void mfunc_zeroFilter(uint8_t param)
 }
 
 
+
+int currentNumberStartupTare = 0;
+bool isEnterStartupTare = false;
+
+// *********************************************************************
+void mFunc_startupTare(uint8_t param)
+// *********************************************************************
+{
+  isEnterStartupTare = false;
+  if(LCDML.FUNC_setup())          // ****** SETUP *********
+  {
+    if (settings.startupTare) currentNumberStartupTare = 1;
+    else currentNumberStartupTare = 0;
+    
+    LCDML_UNUSED(param);
+  }
+
+  if(LCDML.FUNC_loop())           // ****** LOOP *********
+  {
+      if(LCDML.BT_checkDown())
+      {
+        if (currentNumberStartupTare == 0) currentNumberStartupTare =1;
+        else currentNumberStartupTare = 0;
+      }
+      if (LCDML.BT_checkQuit())
+      {
+        LCDML.FUNC_goBackToMenu(3);
+      }
+      if(LCDML.BT_checkEnter())
+      {
+        isEnterStartupTare = true;
+      }
+    do {
+        u8g2.clear();
+        
+        u8g2.drawRFrame(0,0,128,64,7);
+        u8g2.drawRFrame(37,21,50,20,7);
+        u8g2.setFont(u8g_font_6x10r);
+        u8g2.drawStr(6,10,"Tare on startup?");
+        
+        u8g2.setFont(u8g_font_9x18Br);
+
+        u8g2.drawStr(45,35,resetOptions[currentNumberStartupTare]);
+
+        if (isEnterStartupTare)
+        {
+          if (currentNumberStartupTare == 1) settings.startupTare = true;
+          else settings.startupTare = false;
+          
+          memoryWriteSetting();
+          LCDML.OTHER_jumpToFunc(mFunc_settings);
+        }
+
+    } while( u8g2.nextPage() );
+  }
+
+
+  LCDML.FUNC_disableScreensaver();
+  if(LCDML.FUNC_close())      // ****** STABLE END *********
+  {
+    // you can here reset some global vars or do nothing
+  }
+}
+
+int currentNumberdeadTare = 0;
+bool isEnterdeadTare = false;
+
+// *********************************************************************
+void mFunc_deadTare(uint8_t param)
+// *********************************************************************
+{
+  isEnterdeadTare = false;
+  if(LCDML.FUNC_setup())          // ****** SETUP *********
+  {
+    LCDML_UNUSED(param);
+  }
+
+  if(LCDML.FUNC_loop())           // ****** LOOP *********
+  {
+      if(LCDML.BT_checkDown())
+      {
+        if (currentNumberdeadTare == 0) currentNumberdeadTare =1;
+        else currentNumberdeadTare = 0;
+      }
+      if (LCDML.BT_checkQuit())
+      {
+        LCDML.FUNC_goBackToMenu(3);
+      }
+      if(LCDML.BT_checkEnter())
+      {
+        isEnterdeadTare = true;
+      }
+    do {
+        u8g2.clear();
+        
+        u8g2.drawRFrame(0,0,128,64,7);
+        u8g2.drawRFrame(37,21,50,20,7);
+        u8g2.setFont(u8g_font_6x10r);
+        u8g2.drawStr(6,10,"Set dead offset?");
+        
+        u8g2.setFont(u8g_font_9x18Br);
+
+        u8g2.drawStr(45,35,resetOptions[currentNumberdeadTare]);
+
+        if (isEnterdeadTare)
+        {
+          if (currentNumberdeadTare == 1)
+          {
+            scale.power_up();
+            settings.deadTare = scale.read_average(1);
+            scale.set_offset(settings.deadTare);
+            scale.power_down();
+            memoryWriteSetting();
+          }
+          
+          LCDML.FUNC_goBackToMenu();
+        }
+
+    } while( u8g2.nextPage() );
+  }
+
+
+  LCDML.FUNC_disableScreensaver();
+  if(LCDML.FUNC_close())      // ****** STABLE END *********
+  {
+    // you can here reset some global vars or do nothing
+  }
+}
 
 int currentNumberReset = 0;
 bool isEnterReset = false;
@@ -2714,7 +2846,7 @@ void mFunc_welcomePage(uint8_t param)
       u8g2.drawStr(75,31,"WEIGHT");
       u8g2.drawStr(65,43,"INDICATOR");
       u8g2.setFont(u8g_font_5x8);
-      u8g2.drawStr(82,60,"V0.6");
+      u8g2.drawStr(82,60,"V0.8");
     } while( u8g2.nextPage() );
 
   }
