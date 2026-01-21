@@ -47,7 +47,7 @@ void getWeight(){
     // }
     
     
-    loadCell.pureADC = scale.read_average(1);
+    loadCell.pureADC = scale.read_average(2);
     if (loadCell.pureADC > 8300000 || loadCell.pureADC < -8300000) loadCell.isOver = true;
     else
     {
