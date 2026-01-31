@@ -2945,7 +2945,7 @@ void mFunc_welcomePage(uint8_t param)
       u8g2.drawStr(75, 31, "WEIGHT");
       u8g2.drawStr(65, 43, "INDICATOR");
       u8g2.setFont(u8g_font_5x8);
-      u8g2.drawStr(82, 60, "V0.10");
+      u8g2.drawStr(72, 60, "V4.11.11");
     } while (u8g2.nextPage());
   }
 

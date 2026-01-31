@@ -48,10 +48,8 @@ static void readInputs(void *arg)
       inputs.input1 = digitalRead(PA11);
       inputs.input2 = digitalRead(PA12);
       if (inputs.input1 == 0)
-        // buzzer.beep(75, 50);
         functions.functionActive = true;
       if (inputs.input2 == 0)
-        // buzzer.beep(75, 50);
         functions.functionActive = false;
       xSemaphoreGive(xSemaphore);
     }
@@ -82,7 +80,8 @@ static void readLoadCell(void *arg)
   }
 }
 
-int dosingPumpBeep = 10;
+int dosingPumpBeep = 50;
+int counterForDousing = 0;
 
 static void loadcellAnalysis(void *arg)
 {
@@ -175,26 +174,22 @@ static void loadcellAnalysis(void *arg)
         digitalWrite(fullTimeoutputNumber, LOW);
         if (settings.dosingFunction.lowTime < dosingPumpBeep)
           dosingPumpBeep = settings.dosingFunction.lowTime;
-        int highTimeSlice = 0;
-        int lowTimeSlice = 0;
         for (int i = 0; i < settings.dosingFunction.cycleCount; i++)
         {
-          highTimeSlice = 0;
-          lowTimeSlice = 0;
           if (functions.functionActive)
           {
             functions.currentCounterNumber = i + 1;
             functions.dosingHigh = true;
             digitalWrite(dosingOutputNumber, LOW);
-            while (highTimeSlice < settings.dosingFunction.highTime)
+            while (counterForDousing < settings.dosingFunction.highTime)
             {
               if (!functions.functionActive)
               {
                 functions.dosingHigh = false;
                 break;
               }
-              highTimeSlice += 10;
-              vTaskDelay(pdMS_TO_TICKS(10));
+              vTaskDelay(1);
+              counterForDousing++;
             }
             functions.dosingHigh = false;
             if (!functions.functionActive)
@@ -205,14 +200,15 @@ static void loadcellAnalysis(void *arg)
             digitalWrite(PB7, HIGH);
             vTaskDelay(dosingPumpBeep);
             digitalWrite(PB7, LOW);
-            while (lowTimeSlice < settings.dosingFunction.lowTime - dosingPumpBeep)
+            counterForDousing = 0;
+            while (counterForDousing < settings.dosingFunction.lowTime - dosingPumpBeep)
             {
               if (!functions.functionActive)
               {
                 break;
               }
-              lowTimeSlice += 10;
-              vTaskDelay(pdMS_TO_TICKS(10));
+              vTaskDelay(1);
+              counterForDousing++;
             }
           }
         }
@@ -262,15 +258,12 @@ void setup()
   xSemaphore = xSemaphoreCreateMutex();
   portBASE_TYPE s1, s2, s3, s4;
 
-  // loadDefaultSetting();
-  // memoryWriteSetting();
   if (xSemaphore != NULL)
   {
-
-    s1 = xTaskCreate(lcd, "LCD", 512, NULL, 500, &lcdHandle);
+    s1 = xTaskCreate(lcd, "LCD", 512, NULL, 300, &lcdHandle);
     s2 = xTaskCreate(readInputs, "readInputs", 512, NULL, -1, &readInputsHandle);
     s3 = xTaskCreate(readLoadCell, "readLoadCell", 512, NULL, 400, &readLoadCellHandle);
-    s4 = xTaskCreate(loadcellAnalysis, "loadcellAnalysis", 512, NULL, 300, &loadcellAnalysisHandle);
+    s4 = xTaskCreate(loadcellAnalysis, "loadcellAnalysis", 512, NULL, 500, &loadcellAnalysisHandle);
 
     if (s1 != pdPASS || s2 != pdPASS || s3 != pdPASS || s4 != pdPASS)
     {
