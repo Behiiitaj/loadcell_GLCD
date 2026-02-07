@@ -312,6 +312,10 @@ void lcdml_menu_control(void)
         digitalWrite(PB7, HIGH);
         delay(75);
         digitalWrite(PB7, LOW);
+        if (LCDML.MENU_getLayer() == 0)
+        {
+          LCDML.OTHER_jumpToID(28);
+        }
       }
       if (bitRead(but_stat, 4))
       {
