@@ -181,6 +181,7 @@ static void loadcellAnalysis(void *arg)
             functions.currentCounterNumber = i + 1;
             functions.dosingHigh = true;
             digitalWrite(dosingOutputNumber, LOW);
+            counterForDousing = 0;
             while (counterForDousing < settings.dosingFunction.highTime)
             {
               if (!functions.functionActive)
